@@ -1,0 +1,20 @@
+{
+  "name": "playwright-bdd-cucumber-2.0lawfty-prototype",
+  "version": "1.0.0",
+  "description": "Prototype for Playwright with BDD and Cucumber for 2.0 Release",
+  "main": "index.js",
+  "scripts": {
+    "generate-steps": "node scripts/generate-steps.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@cucumber/cucumber": "^10.9.0",
+    "playwright": "^1.46.1"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.46.1",
+    "@types/node": "^22.5.2"
+  }
+}
