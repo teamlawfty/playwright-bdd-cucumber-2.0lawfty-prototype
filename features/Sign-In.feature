@@ -2,7 +2,7 @@ Feature: Sign-in page
 
   Scenario: User successfully navigates to the sign-in page
     Given I am a user who needs to sign in
-    When I navigate to the sign-in URL "/sign-in"
+    When I navigate to the sign-in URL "https://api.staging-lawfty.com/users/sign_in"
     Then I should see the sign-in page with the fields "Email address" and "Password"
     And I should see a "Remember me" checkbox
     And I should see a "Sign in" button
@@ -20,8 +20,7 @@ Feature: Sign-in page
   Scenario: User navigates through the sign-in form using the tab key
     Given I am on the sign-in page
     When I press the "Tab" key
-    Then the focus should move sequentially through the "Email address", "Password",
-  "Remember me" checkbox, and "Sign in" button
+    Then the focus should move sequentially through the "Email address", "Password", "Remember me" checkbox, and "Sign in" button
 
   Scenario: User submits the form using the return key
     Given I am on the sign-in page
