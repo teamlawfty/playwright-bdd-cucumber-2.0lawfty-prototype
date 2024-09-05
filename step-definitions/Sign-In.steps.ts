@@ -1,107 +1,106 @@
 
 import { Given, When, Then } from '@cucumber/cucumber';
+import { Browser, BrowserContext, Page } from 'playwright';
+import playwright from 'playwright';
+import { expect } from '@playwright/test';
+import { Before, After } from '@cucumber/cucumber';
+import * as dotenv from 'dotenv';
 
-    Given('I am a user who needs to sign in', async () => {
-      // Implement this step
-    });
-  
+let browser: Browser;
+let context: BrowserContext;
+let page: Page;
 
-    When('I navigate to the sign-in URL "/sign-in"', async () => {
-      // Implement this step
-    });
-  
+dotenv.config();
 
-    Then('I should see the sign-in page with the fields "Email address" and "Password"', async () => {
-      // Implement this step
-    });
-  
+Before(async () => {
+  browser = await playwright.chromium.launch({ headless: false });
+  context = await browser.newContext();
+  page = await context.newPage();
+});
 
-    Then('I should see a "Remember me" checkbox', async () => {
-      // Implement this step
-    });
-  
+Given('I am a user who needs to sign in', async () => {
+  // Implement this step
+});
 
-    Then('I should see a "Sign in" button', async () => {
-      // Implement this step
-    });
-  
+When('I navigate to the sign-in URL "/sign-in"', async () => {
+  await page.goto(process.env.SIGN_IN_URL || '');
+});
 
-    Then('I should see a "Forgot your password?" link', async () => {
-      // Implement this step
-    });
-  
+Then('I should see the sign-in page with the fields "Email address" and "Password"', async () => {
+  await expect(page.locator('input[name="email"]')).toBeVisible();
+  await expect(page.locator('input[name="password"]')).toBeVisible();
+});
 
-    Given('I am on the sign-in page', async () => {
-      // Implement this step
-    });
-  
+Then('I should see a "Remember me" checkbox', async () => {
+  await expect(page.locator('input[name="rememberMe"]')).toBeVisible();
+});
 
-    When('I enter a valid email address in the "Email address" field', async () => {
-      // Implement this step
-    });
-  
+Then('I should see a "Sign in" button', async () => {
+  await expect(page.locator('button:has-text("Sign in")')).toBeVisible();
+});
 
-    When('I enter a valid password in the "Password" field', async () => {
-      // Implement this step
-    });
-  
+Then('I should see a "Forgot your password?" link', async () => {
+  await expect(page.locator('a:has-text("Forgot Your Password?")')).toBeVisible();
+});
 
-    When('I check the "Remember me" checkbox', async () => {
-      // Implement this step
-    });
-  
+Given('I am on the sign-in page', async () => {
+  await page.goto(process.env.SIGN_IN_URL || '');
+});
 
-    When('I click the "Sign in" button', async () => {
-      // Implement this step
-    });
-  
+When('I enter a valid email address in the "Email address" field', async () => {
+  await page.fill('input[name="email"]', process.env.VALID_EMAIL || '');
+});
 
-    Then('I should be signed in successfully', async () => {
-      // Implement this step
-    });
-  
+When('I enter a valid password in the "Password" field', async () => {
+  await page.fill('input[name="password"]', process.env.VALID_PASSWORD || '');
+});
 
-    Then('the application should store the authentication token', async () => {
-      // Implement this step
-    });
-  
+When('I check the "Remember me" checkbox', async () => {
+  await page.check('input[name="rememberMe"]');
+});
 
-    Given('I am on the sign-in page', async () => {
-      // Implement this step
-    });
-  
+When('I click the "Sign in" button', async () => {
+  await page.click('button:has-text("Sign in")');
+});
 
-    When('I press the "Tab" key', async () => {
-      // Implement this step
-    });
-  
+Then('I should be signed in successfully', async () => {
+  await expect(page).toHaveURL(/dashboard/);
+});
 
-    Then('the focus should move sequentially through the "Email address", "Password",', async () => {
-      // Implement this step
-    });
-  
+Then('the application should store the authentication token', async () => {
+  const cookies = await page.context().cookies();
+  const authToken = cookies.find(cookie => cookie.name === 'auth_token');
+  expect(authToken).toBeDefined();
+});
 
-    Given('I am on the sign-in page', async () => {
-      // Implement this step
-    });
-  
+When('I press the "Tab" key', async () => {
+  await page.keyboard.press('Tab');
+});
 
-    Given('I have entered a valid email and password', async () => {
-      // Implement this step
-    });
-  
+Then('the focus should move sequentially through the "Email address", "Password",', async () => {
+  await expect(page.locator('input[name="email"]')).toBeFocused();
+  await page.keyboard.press('Tab');
+  await expect(page.locator('input[name="password"]')).toBeFocused();
+  await page.keyboard.press('Tab');
+  await expect(page.locator('input[name="rememberMe"]')).toBeFocused();
+  await page.keyboard.press('Tab');
+  await expect(page.locator('button:has-text("Sign in")')).toBeFocused();
+});
 
-    When('I press the "Enter" key', async () => {
-      // Implement this step
-    });
-  
+Given('I have entered a valid email and password', async () => {
+  await page.fill('input[name="email"]', process.env.VALID_EMAIL || '');
+  await page.fill('input[name="password"]', process.env.VALID_PASSWORD || '');
+});
 
-    Then('the form should be submitted', async () => {
-      // Implement this step
-    });
-  
+When('I press the "Enter" key', async () => {
+  await page.keyboard.press('Enter');
+});
 
-    Then('I should be signed in successfully', async () => {
-      // Implement this step
-    });
-  
+Then('the form should be submitted', async () => {
+  await expect(page).toHaveURL(/dashboard/);
+});
+
+// Closing the browser after all steps are done
+After(async () => {
+  await browser.close();
+});

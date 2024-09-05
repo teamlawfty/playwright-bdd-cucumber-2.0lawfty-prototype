@@ -4,17 +4,21 @@
   "description": "Prototype for Playwright with BDD and Cucumber for 2.0 Release",
   "main": "index.js",
   "scripts": {
-    "generate-steps": "node scripts/generate-steps.js"
+    "generate-steps": "node scripts/generate-steps.js",
+    "test": "cucumber-js"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "dependencies": {
     "@cucumber/cucumber": "^10.9.0",
+    "dotenv": "^16.4.5",
     "playwright": "^1.46.1"
   },
   "devDependencies": {
     "@playwright/test": "^1.46.1",
-    "@types/node": "^22.5.2"
+    "@types/node": "^22.5.2",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.5.4"
   }
 }
