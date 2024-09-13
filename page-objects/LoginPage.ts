@@ -1,5 +1,4 @@
-import { Page } from 'playwright';
-import { Locator } from 'playwright';
+import { Page, Locator } from 'playwright';
 import { expect } from '@playwright/test';
 
 export class LoginPage {
@@ -13,7 +12,9 @@ export class LoginPage {
         this.rememberMeCheckbox = this.page.locator('label:text("Remember me")');
         this.signInButton = this.page.locator('button[type="submit"]');
         this.dashboardSpan = this.page.locator('span:has-text("Dashboard")');
-        this.forgotPasswordLink = this.page.locator('a:has-text("Forgot Your Password?")');
+        this.forgotPasswordLink = this.page.locator('a:has-text("Forgot your password?")');
+        this.invalidLoginMessage = this.page.locator('p.text-red:has-text("Invalid login credentials. Please try again.")');
+        this.invalidEmailFormatMessage = this.page.locator('div:has-text("Please include an \'@\' in the email address.")');
     }
 
     // Locators
@@ -23,6 +24,8 @@ export class LoginPage {
     signInButton: Locator;
     dashboardSpan: Locator;
     forgotPasswordLink: Locator;
+    invalidLoginMessage: Locator;
+    invalidEmailFormatMessage: Locator;
 
     // Actions
     async navigateToLogin(url: string) {
@@ -53,14 +56,15 @@ export class LoginPage {
         await this.page.keyboard.press('Enter');
     }
 
-    async focusAndCheckElement(locator: string) {
-        const element = this.page.locator(locator);
-        await element.waitFor({ state: 'visible' });
-        await element.focus();
-        await expect(element).toBeFocused();
-    }
-
     async getCookies() {
         return await this.page.context().cookies();
+    }
+
+    async expectInvalidLoginMessage() {
+        await expect(this.invalidLoginMessage).toBeVisible();
+    }
+
+    async expectInvalidEmailFormatMessage() {
+        await expect(this.invalidEmailFormatMessage).toBeVisible();
     }
 }

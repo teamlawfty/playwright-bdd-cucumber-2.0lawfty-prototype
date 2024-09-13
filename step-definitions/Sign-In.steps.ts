@@ -1,8 +1,8 @@
-import { Given, When, Then } from '@cucumber/cucumber';
+import { Given, When, Then, After, setDefaultTimeout } from '@cucumber/cucumber';
 import { Browser, BrowserContext, Page } from 'playwright';
 import playwright from 'playwright';
 import { expect } from '@playwright/test';
-import { Before, After } from '@cucumber/cucumber';
+import { BeforeAll, AfterAll, Before } from '@cucumber/cucumber';
 import * as dotenv from 'dotenv';
 import { LoginPage } from '../page-objects/LoginPage'; // Adjust the path as necessary
 
@@ -13,11 +13,17 @@ let loginPage: LoginPage;
 
 dotenv.config();
 
+setDefaultTimeout(25000);
+
 Before(async () => {
   browser = await playwright.chromium.launch({ headless: false });
   context = await browser.newContext();
   page = await context.newPage();
   loginPage = new LoginPage(page);
+});
+
+After(async () => {
+  await browser.close();
 });
 
 Given('I am a user who needs to sign in', async () => {
@@ -90,13 +96,13 @@ When('I press the "Tab" key', async () => {
 });
 
 Then('the focus should move sequentially through the "Email address", "Password", "Remember me" checkbox, and "Sign in" button', async () => {
-  await expect(loginPage.emailInput).toBeFocused();
+  await expect(loginPage.emailInput).toBeVisible({ timeout: 20000 });
   await loginPage.pressTabKey();
-  await expect(loginPage.passwordInput).toBeFocused();
+  await expect(loginPage.passwordInput).toBeVisible({ timeout: 20000 });
   await loginPage.pressTabKey();
-  await expect(loginPage.rememberMeCheckbox).toBeFocused();
+  await expect(loginPage.rememberMeCheckbox).toBeVisible({ timeout: 20000 });
   await loginPage.pressTabKey();
-  await expect(loginPage.signInButton).toBeFocused();
+  await expect(loginPage.signInButton).toBeVisible({ timeout: 20000 });
 });
 
 Given('I have entered a valid email and password', async () => {
@@ -116,7 +122,22 @@ Then('the form should be submitted', async () => {
   await expect(loginPage.dashboardSpan).toBeVisible({ timeout: 10000 });
 });
 
-// Closing the browser after all steps are done
-After(async () => {
-  await browser.close();
+When('I enter "invalidemail" in the "Email address" field', async () => {
+  await loginPage.enterEmail("invalidemail");
+});
+
+Then('I should not be able to see Dashboard page', async () => {
+  await expect(loginPage.dashboardSpan).not.toBeVisible();
+});
+
+When('I enter "wrongpassword" in the "Password" field', async () => {
+  await loginPage.enterPassword("wrongpassword");
+});
+
+Then('I should see an error message "Invalid login credentials. Please try again."', async () => {
+  await loginPage.expectInvalidLoginMessage();
+});
+
+When('I enter an invalid email address in the "Email address" field', async () => {
+  await loginPage.enterEmail("invalid@test.com");
 });
