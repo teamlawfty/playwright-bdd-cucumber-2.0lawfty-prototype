@@ -1,0 +1,27 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+      {
+        "name": "Debug Cucumber Tests",
+        "type": "node",
+        "request": "launch",
+        "program": "${workspaceFolder}/node_modules/.bin/cucumber-js",  // Points to the Cucumber.js binary
+        "args": [
+          "--require-module",
+          "ts-node/register",
+          "--require",
+          "${workspaceFolder}/step-definitions/Sign-In.steps.ts",  // Adjust based on your steps file
+          "--format",
+          "progress"
+        ],
+        "console": "integratedTerminal",
+        "internalConsoleOptions": "neverOpen",
+        "env": {
+          "DEBUG": "pw:api"
+        },
+        "sourceMaps": true,
+        "skipFiles": ["<node_internals>/**"]
+      }
+    ]
+  }
+  

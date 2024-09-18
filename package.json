@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "generate-steps": "node scripts/generate-steps.js",
-    "test": "cucumber-js"
+    "test": "cucumber-js --parallel 1"
   },
   "keywords": [],
   "author": "",

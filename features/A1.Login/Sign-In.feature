@@ -28,3 +28,25 @@ Feature: Sign-in page
     When I press the "Enter" key
     Then the form should be submitted
     And I should be signed in successfully
+
+  Scenario: User enters an invalid email format
+    Given I am on the sign-in page
+    When I enter "invalidemail" in the "Email address" field
+    And I enter a valid password in the "Password" field
+    And I click the "Sign in" button
+    Then I should not be able to see Dashboard page
+
+  Scenario: User enters an invalid password
+    Given I am on the sign-in page
+    When I enter a valid email address in the "Email address" field
+    And I enter "wrongpassword" in the "Password" field
+    And I click the "Sign in" button
+    Then I should see an error message "Invalid login credentials. Please try again."
+
+  Scenario: User enters an invalid email with correct format
+    Given I am on the sign-in page
+    When I enter an invalid email address in the "Email address" field
+    And I enter a valid password in the "Password" field
+    And I click the "Sign in" button
+    Then I should see an error message "Invalid login credentials. Please try again."
+
