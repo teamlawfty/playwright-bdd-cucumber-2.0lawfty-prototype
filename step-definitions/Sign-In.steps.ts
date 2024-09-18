@@ -1,8 +1,7 @@
-import { Given, When, Then, After, setDefaultTimeout } from '@cucumber/cucumber';
+import { When, Then, After, setDefaultTimeout, Before } from '@cucumber/cucumber';
 import { Browser, BrowserContext, Page } from 'playwright';
 import playwright from 'playwright';
 import { expect } from '@playwright/test';
-import { BeforeAll, AfterAll, Before } from '@cucumber/cucumber';
 import * as dotenv from 'dotenv';
 import { LoginPage } from '../page-objects/LoginPage'; // Adjust the path as necessary
 
@@ -26,118 +25,87 @@ After(async () => {
   await browser.close();
 });
 
-Given('I am a user who needs to sign in', async () => {
-  // Implement this step
+
+When(/^I navigate to "(.+)"$/, async (path: string) => {
+  const url = process.env.host + path;
+  await page.goto(url);
 });
 
-When('I navigate to the sign-in URL {string}', async (url: string) => {
-  await loginPage.navigateToLogin(process.env.SIGN_IN_URL || url);
+When(/^I enter "(.+)" in the "(.+)" field$/, async (value: string, fieldName: string) => {
+
+  if (value.startsWith('{env.')) {
+    const envVarName = value.slice(5, -1);
+    value = process.env[envVarName] || `default-${envVarName}`;
+  }
+
+  const locator = `input[name="${fieldName}"], textarea[name="${fieldName}"]`;
+  await page.fill(locator, value);
 });
 
-Then('I should see the sign-in page with the fields "Email address" and "Password"', async () => {
-  await expect(loginPage.emailInput).toBeVisible();
-  await expect(loginPage.passwordInput).toBeVisible();
+
+When(/^I click the "(.+)" button$/, async (buttonText: string) => {
+  await page.locator(`button:has-text("${buttonText}"), input[type="submit"]:has-text("${buttonText}")`).click();
 });
 
-Then('I should see a "Remember me" checkbox', async () => {
-  await expect(loginPage.rememberMeCheckbox).toBeVisible();
+
+When(/^I (check|uncheck) the "(.+)" checkbox$/, async (action: string, label: string) => {
+  const locator = `input[type="checkbox"] + label:has-text("${label}")`;
+  if (action === 'check') {
+    await page.check(locator);
+  } else {
+    await page.uncheck(locator);
+  }
 });
 
-Then('I should see a "Sign in" button', async () => {
-  await expect(loginPage.signInButton).toBeVisible();
+
+Then(/^I should see the "(.+)" (field|button|checkbox|link)$/, async (label: string, elementType: string) => {
+  let locator;
+  switch (elementType) {
+    case 'field':
+      locator = `input[name="${label}"], textarea[name="${label}"]`;
+      break;
+    case 'button':
+      locator = `button:has-text("${label}"), input[type="submit"]:has-text("${label}")`;
+      break;
+    case 'checkbox':
+      locator = `input[type="checkbox"] + label:has-text("${label}")`;
+      break;
+    case 'link':
+      locator = `a:has-text("${label}")`;
+      break;
+  }
+  await expect(page.locator(locator)).toBeVisible();
 });
 
-Then('I should see a "Forgot your password?" link', async () => {
-  await expect(loginPage.forgotPasswordLink).toBeVisible();
+
+When(/^I press the "Enter" key$/, async () => {
+  await page.keyboard.press('Enter');
 });
 
-Given('I am on the sign-in page', async () => {
-  await loginPage.navigateToLogin(process.env.SIGN_IN_URL || '');
+When(/^I press the "Tab" key$/, async () => {
+  await page.keyboard.press('Tab');
 });
 
-When('I enter a valid email address in the "Email address" field', async () => {
-  await loginPage.enterEmail(process.env.EMAIL || '');
+
+Then(/^I should see the "Dashboard" page$/, async () => {
+  await expect(page.locator('text=Dashboard')).toBeVisible();
 });
 
-When('I enter a valid password in the "Password" field', async () => {
-  await loginPage.enterPassword(process.env.PASSWORD || '');
+
+Then(/^I should see an error message "Invalid login credentials\. Please try again\."$/, async () => {
+  await expect(loginPage.invalidLoginMessage).toBeVisible();
 });
 
-When('I check the "Remember me" checkbox', async () => {
-  await loginPage.checkRememberMe();
+
+Then(/^I should see an error message for invalid email format$/, async () => {
+  await expect(loginPage.invalidEmailFormatMessage).toBeVisible();
 });
 
-When('I click the "Sign in" button', async () => {
-  await loginPage.clickSignIn();
-});
 
-Then('I should be signed in successfully', async () => {
-  await expect(loginPage.dashboardSpan).toBeVisible();
-
-  const cookies = await loginPage.getCookies();
+Then(/^the application should store the authentication token$/, async () => {
+  const cookies = await context.cookies();
   const authToken = cookies.find(cookie => cookie.name === 'accessToken');
-
   expect(authToken).toBeDefined();
-  expect(authToken?.value).not.toEqual('');
-
+  expect(authToken?.value).not.toBe('');
   console.log('Auth Token:', authToken?.value);
-});
-
-Then('the application should store the authentication token', async () => {
-  const cookies = await loginPage.getCookies();
-  const authTokenCookie = cookies.find(cookie => cookie.name === 'accessToken');
-
-  expect(authTokenCookie).toBeDefined();
-  expect(authTokenCookie?.value).not.toEqual('');
-});
-
-When('I press the "Tab" key', async () => {
-  await loginPage.pressTabKey();
-});
-
-Then('the focus should move sequentially through the "Email address", "Password", "Remember me" checkbox, and "Sign in" button', async () => {
-  await expect(loginPage.emailInput).toBeVisible({ timeout: 20000 });
-  await loginPage.pressTabKey();
-  await expect(loginPage.passwordInput).toBeVisible({ timeout: 20000 });
-  await loginPage.pressTabKey();
-  await expect(loginPage.rememberMeCheckbox).toBeVisible({ timeout: 20000 });
-  await loginPage.pressTabKey();
-  await expect(loginPage.signInButton).toBeVisible({ timeout: 20000 });
-});
-
-Given('I have entered a valid email and password', async () => {
-  await loginPage.enterEmail(process.env.EMAIL || '');
-  await loginPage.pressTabKey();
-  await loginPage.enterPassword(process.env.PASSWORD || '');
-  await loginPage.pressTabKey();
-  await loginPage.pressTabKey();
-});
-
-When('I press the "Enter" key', async () => {
-  await loginPage.pressEnterKey();
-});
-
-Then('the form should be submitted', async () => {
-  await page.waitForNavigation({ waitUntil: 'networkidle', timeout: 10000 });
-  await expect(loginPage.dashboardSpan).toBeVisible({ timeout: 10000 });
-});
-
-When('I enter "invalidemail" in the "Email address" field', async () => {
-  await loginPage.enterEmail("invalidemail");
-});
-
-Then('I should not be able to see Dashboard page', async () => {
-  await expect(loginPage.dashboardSpan).not.toBeVisible();
-});
-
-When('I enter "wrongpassword" in the "Password" field', async () => {
-  await loginPage.enterPassword("wrongpassword");
-});
-
-Then('I should see an error message "Invalid login credentials. Please try again."', async () => {
-  await loginPage.expectInvalidLoginMessage();
-});
-
-When('I enter an invalid email address in the "Email address" field', async () => {
-  await loginPage.enterEmail("invalid@test.com");
 });

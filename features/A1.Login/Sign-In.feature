@@ -2,19 +2,20 @@ Feature: Sign-in page
 
   Scenario: User successfully navigates to the sign-in page
     Given I am a user who needs to sign in
-    When I navigate to the sign-in URL "https://api.staging-lawfty.com/users/sign_in"
-    Then I should see the sign-in page with the fields "Email address" and "Password"
-    And I should see a "Remember me" checkbox
-    And I should see a "Sign in" button
-    And I should see a "Forgot your password?" link
+    When I navigate to "/users/sign_in"
+    Then I should see the "Email address" field
+    And I should see the "Password" field
+    And I should see the "Remember me" checkbox
+    And I should see the "Sign in" button
+    And I should see the "Forgot your password?" link
 
   Scenario: User enters valid credentials and signs in
     Given I am on the sign-in page
-    When I enter a valid email address in the "Email address" field
-    And I enter a valid password in the "Password" field
+    When I enter "{env.EMAIL}" in the "Email address" field
+    And I enter "{env.PASSWORD}" in the "Password" field
     And I check the "Remember me" checkbox
     And I click the "Sign in" button
-    Then I should be signed in successfully
+    Then I should see the "Dashboard" page
     And the application should store the authentication token
 
   Scenario: User navigates through the sign-in form using the tab key
@@ -34,7 +35,7 @@ Feature: Sign-in page
     When I enter "invalidemail" in the "Email address" field
     And I enter a valid password in the "Password" field
     And I click the "Sign in" button
-    Then I should not be able to see Dashboard page
+    Then I should see an error message for invalid email format
 
   Scenario: User enters an invalid password
     Given I am on the sign-in page
@@ -45,8 +46,7 @@ Feature: Sign-in page
 
   Scenario: User enters an invalid email with correct format
     Given I am on the sign-in page
-    When I enter an invalid email address in the "Email address" field
+    When I enter "invalid@test.com" in the "Email address" field
     And I enter a valid password in the "Password" field
     And I click the "Sign in" button
     Then I should see an error message "Invalid login credentials. Please try again."
-
