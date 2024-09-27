@@ -13,7 +13,6 @@ Then(/^the application should store the authentication token$/, async () => {
 
     expect(authToken).toBeDefined();
     expect(authToken?.value).not.toBe('');
-    console.log('Auth Token:', authToken?.value);
   } catch (error) {
 
     console.error('Error fetching cookies:', error);

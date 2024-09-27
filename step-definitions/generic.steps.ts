@@ -1,8 +1,7 @@
-// generic.steps.ts
 import { Given, When, Then, After, setDefaultTimeout, Before } from '@cucumber/cucumber';
 import { expect } from '@playwright/test';
 import * as dotenv from 'dotenv';
-import { initializeBrowser, closeBrowser, getPage } from '../helpers/playwrightContext'; // Adjust the path as necessary
+import { initializeBrowser, closeBrowser, getPage } from '../helpers/playwrightContext'; 
 
 dotenv.config();
 
@@ -24,23 +23,51 @@ When(/^I navigate to "(.+)"$/, async (path: string) => {
 
 When(/^I click the "(.+)" (button|link)$/, async (buttonText: string, elementType: string) => {
     const page = getPage();
-    try {
-        let locator: string;
-        if (elementType === 'button') {
-            locator = `button[type="${buttonText.toLowerCase()}"]`;
-        } else if (elementType === 'link') {
-            locator = `a:has-text("${buttonText}")`;
-        } else {
-            throw new Error(`Unknown element type: ${elementType}`);
-        }
+    let locators: string[] = []; // Array to hold possible locators
 
-        await page.locator(locator).waitFor({ state: 'visible', timeout: 5000 });
-        await page.locator(locator).click({ timeout: 20000 });
-    } catch (error) {
-        console.error(`Failed to click the ${elementType} with text: "${buttonText}"`, error);
-        throw error;
+    if (elementType === 'button') {
+        locators = [
+            `button[type="${buttonText.toLowerCase()}"]`,              
+            `button[id="${buttonText.toLowerCase()}"]`,
+            `button[id="${buttonText}"]`,                  
+            `button:has-text("${buttonText}")`,                        
+            `button[name="${buttonText.toLowerCase()}"]`,               
+            `button:has-text("${buttonText.toLowerCase()}")`,           
+            `//button[contains(text(), "${buttonText}")]`,              
+            `//input[@type="button" and @value="${buttonText}"]`,       
+        ];
+    } else if (elementType === 'link') {
+        locators = [
+            `a:has-text("${buttonText}")`,                            
+            `a[id="${buttonText.toLowerCase()}"]`,                    
+            `a[href="${buttonText}"]`,                                
+        ];
+    } else {
+        throw new Error(`Unknown element type: ${elementType}`);
+    }
+
+    // Attempt to locate and click the element using each locator strategy
+    let elementFound = false;
+    for (const locator of locators) {
+        try {
+            const element = page.locator(locator);
+            if (await element.count() > 0) {
+                await element.waitFor({ state: 'visible', timeout: 5000 });
+                await element.click({ timeout: 20000 });
+                elementFound = true;
+                break; 
+            }
+        } catch (error) {
+            
+            console.warn(`Failed to locate using strategy: ${locator}`, error);
+        }
+    }
+
+    if (!elementFound) {
+        throw new Error(`Failed to click the ${elementType} with text: "${buttonText}" using the available locator strategies.`);
     }
 });
+
 
 When(/^I (check|uncheck) the "(.+)" checkbox$/, async (action: string, label: string) => {
     const page = getPage();
@@ -52,33 +79,71 @@ When(/^I (check|uncheck) the "(.+)" checkbox$/, async (action: string, label: st
     }
 });
 
-Then(/^I should see the "(.+)" (field|button|checkbox|link)$/, async (label: string, elementType: string) => {
+Then(/^I should see the "(.+)" (field|button|checkbox|link|textarea)$/, async (label: string, elementType: string) => {
     const page = getPage();
-    let locator: string;
+    let locators: string[] = []; // Array to hold possible locators
 
     switch (elementType) {
         case 'field':
         case 'input':
-            locator = `input[name="${label.toLowerCase()}"]`;
+            locators = [
+                `input[name="${label.toLowerCase()}"]`,
+                `input[name="${label}"]`,
+                `input[id="${label.toLowerCase()}"]`,
+                `input[id="${label}"]`,
+                `input[placeholder="${label}"]`, 
+                `//label[contains(text(), "${label}")]/following-sibling::input`
+            ];
             break;
         case 'textarea':
-            locator = `textarea[name="${label.toLowerCase()}"]`;
+            locators = [
+                `textarea[name="${label.toLowerCase()}"]`,
+                `textarea[id="${label.toLowerCase()}"]`,
+                `textarea[placeholder="${label}"]`
+            ];
             break;
         case 'button':
-            locator = `button[type="${label.toLowerCase()}"]`;
+            locators = [
+                `button[type="${label.toLowerCase()}"]`,
+                `button[id="${label}"]`,
+                `button[id="${label.toLowerCase()}"]`,
+                `//button[contains(text(), "${label}")]`,
+                `//input[@type="button" and @value="${label}"]`, 
+            ];
             break;
         case 'checkbox':
-            locator = `//label[contains(text(), "${label}")]`;
+            locators = [
+                `//label[contains(text(), "${label}")]/preceding-sibling::input[@type="checkbox"]`,
+                `//label[contains(text(), "${label}")]`,
+                `input[type="checkbox"][name="${label.toLowerCase()}"]`,
+                `input[type="checkbox"][id="${label.toLowerCase()}"]`
+            ];
             break;
         case 'link':
-            locator = `a[href="${label}"]`;
+            locators = [
+                `a[href="${label}"]`,
+                `a:has-text("${label}")`, 
+                `a[id="${label.toLowerCase()}"]`
+            ];
             break;
         default:
             throw new Error(`Unknown element type: ${elementType}`);
     }
 
-    await expect(page.locator(locator)).toBeVisible();
+    let elementFound = false;
+    for (const locator of locators) {
+        if (await page.locator(locator).count() > 0) {
+            await expect(page.locator(locator)).toBeVisible();
+            elementFound = true;
+            break; 
+        }
+    }
+
+    if (!elementFound) {
+        throw new Error(`Element "${label}" of type "${elementType}" not found using the available locator strategies.`);
+    }
 });
+
 
 When(/^I press the "(.*)" key$/, async (key: string) => {
     const page = getPage();
@@ -99,6 +164,7 @@ Given(/^I am on the "([^"]*)" page$/, async (pageName: string) => {
     const page = getPage();
     const pages: Record<string, string> = {
         'sign-in': `${process.env.HOST}/login`,
+        'inquiries': `${process.env.HOST}/inquiries`,
         // Add more pages as needed
     };
 
@@ -141,3 +207,53 @@ When(/^I enter (a valid|an invalid) "(.*)" in the "(.+)" (field|input|textarea)$
 
     await page.fill(locator, value);
 });
+
+Then(/^I should see a dropdown for "([^"]*)" with options:$/, async (dropdownName: string, expectedOptionsTable) => {
+    const page = getPage();
+
+    const expectedOptions = expectedOptionsTable.raw().flat();
+
+    const dropdownTriggerLocator = page.locator(`[id="${dropdownName}"]`);
+
+    await dropdownTriggerLocator.scrollIntoViewIfNeeded();
+    await dropdownTriggerLocator.focus();
+
+    await dropdownTriggerLocator.click();
+
+    await page.waitForTimeout(1000); 
+
+    await page.keyboard.press('Escape');
+
+    await page.waitForTimeout(500);
+
+    await dropdownTriggerLocator.click();
+
+    const customOptionsContainer = page.locator('[role="listbox"], .dropdown-container'); 
+    await customOptionsContainer.waitFor({ state: 'visible', timeout: 5000 });
+
+    await customOptionsContainer.scrollIntoViewIfNeeded();
+
+    const visibleOptions = customOptionsContainer.locator('[role="option"], .dropdown-item'); 
+    await visibleOptions.first().waitFor({ state: 'visible', timeout: 5000 });
+
+    const actualOptions = await visibleOptions.evaluateAll((elements) => {
+        return elements.map((option) => option.textContent?.trim() || '');
+    });
+
+    expect(actualOptions).toEqual(expectedOptions);
+});
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

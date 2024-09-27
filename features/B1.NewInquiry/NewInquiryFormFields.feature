@@ -1,38 +1,54 @@
 Feature: New Inquiry Form Fields
 
-    Scenario: User views the New Inquiry form fields
-        Given I am on the New Inquiry form page
-        When I view the form fields
-        Then I should see all required fields on the New Inquiry form
-            | fieldKey         | fieldName         |
-            | inquiryType      | Inquiry Type      |
-            | caseType         | Case Type         |
-            | campaign         | Campaign          |
-            | source           | Source            |
-            | inquiryDate      | Inquiry Date      |
-            | user             | User              |
-            | stage            | Stage             |
-            | incidentDate     | Incident Date     |
-            | passedDate       | Passed Date       |
-            | signedDate       | Signed Date       |
-            | description      | Description       |
-            | name             | Name              |
-            | email            | Email             |
-            | phoneNumber      | Phone Number      |
-            | inquirerLanguage | Inquirer Language |
-            | address          | Address           |
-            | city             | City              |
-            | state            | State             |
-            | zip              | Zip               |
-            | streakBoxKey     | Streak Box Key    |
-        And I should see a dropdown for Inquiry Type - "kind" dropdown, with options: Call, Chat, Form, Referred, Secondary
+    Scenario: User successfully navigates to the New Inquiry form page
+        Given I am on the "sign-in" page
+        When I enter a valid "{env.EMAIL}" in the "Email" field
+        And I enter a valid "{env.PASSWORD}" in the "Password" field
+        And I check the "Remember me" checkbox
+        And I click the "Submit" button
+        Then I should see the "Dashboard" text
+        Given I am on the "inquiries" page
+        When I navigate to "/inquiries/new"
+        Then I should see the "kind" button
+        And I should see the "caseType" button
+        And I should see the "campaignId" button
+        And I should see the "sourceId" button
+        And I should see the "inquiryTime" field
+        And I should see the "user" button
+        And I should see the "stage" button
+        And I should see the "incidentDate" field
+        And I should see the "passedDate" field
+        And I should see the "signedDate" field
+        And I should see the "Description" textarea
+        And I should see the "Name" field
+        And I should see the "Email" field
+        And I should see the "phoneNumber" field
+        And I should see the "inquirerLanguage" button
+        And I should see the "Address" field
+        And I should see the "city" field
+        And I should see the "state" button
+        And I should see the "zip" field
+        And I should see the "streakBoxKey" field
+        And I should see a dropdown for "kind" with options:
+            | Select Inquiry Type |
+            | Call                |
+            | Chat                |
+            | Form                |
+            | Referred Inquiry    |
+            | Secondary Inquiry   |
 
     Scenario: User submits a New Inquiry form
-        Given I am on the New Inquiry form page
-        When I enter "Alabama" in the "Campaign" field for Campaign
-        And I enter "1991/01/17" in the "Inquiry Date" field for Inquiry Date
-        And I enter "Animal Bite" in the "Case Type" field for Case Type
-        And I enter "Adroll" in the "Source" field for Source
-        When I click "Submit" button
-        Then the inquiry should be saved
-        And I should see a confirmation message indicating the inquiry has been successfully created
+        Given I am on the "sign-in" page
+        When I enter a valid "{env.EMAIL}" in the "Email" field
+        And I enter a valid "{env.PASSWORD}" in the "Password" field
+        And I check the "Remember me" checkbox
+        And I click the "Submit" button
+        Then I should see the "Dashboard" text
+        Given I am on the "inquiries" page
+        When I navigate to "/inquiries/new"
+        When I enter a valid "Alabama" in the "Campaign" field
+        And I enter a valid "1991/01/17" in the "Inquiry Date" field
+        And I enter a valid "Animal Bite" in the "Case Type" field
+        And I enter a valid "Adroll" in the "Source" field
+        And I click the "Submit" button
+        Then I should see a confirmation message indicating the inquiry has been successfully created

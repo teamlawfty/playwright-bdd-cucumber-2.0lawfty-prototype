@@ -7,7 +7,7 @@ let page: Page | undefined;
 
 export async function initializeBrowser() {
   if (!browser) {
-    browser = await playwright.chromium.launch({ headless: false });
+    browser = await playwright.chromium.launch({ headless: true });
   }
   if (!context) {
     context = await browser.newContext();
