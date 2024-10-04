@@ -11,8 +11,8 @@ Feature: Sign-in page
 
   Scenario: User enters valid credentials and signs in
     Given I am on the "sign-in" page
-    When I enter a valid "{env.EMAIL}" in the "email" field
-    And I enter a valid "{env.PASSWORD}" in the "password" field
+    When I enter "{env.EMAIL}" in the "email" field
+    And I enter "{env.PASSWORD}" in the "password" field
     And I check the "Remember me" checkbox
     And I click the "Submit" button
     Then I should see the "Dashboard" text
@@ -25,28 +25,28 @@ Feature: Sign-in page
 
   Scenario: User submits the form using the return key
     Given I am on the "sign-in" page
-    And I enter a valid "{env.EMAIL}" in the "email" field
-    And I enter a valid "{env.PASSWORD}" in the "password" field
+    And I enter "{env.EMAIL}" in the "email" field
+    And I enter "{env.PASSWORD}" in the "password" field
     When I press the "Enter" key
     Then I should see the "Dashboard" text
 
   Scenario: User enters an invalid email
     Given I am on the "sign-in" page
-    And I enter an invalid "invalid@mail.com" in the "email" field
-    And I enter a valid "{env.PASSWORD}" in the "password" field
+    And I enter "invalid@mail.com" in the "email" field
+    And I enter "{env.PASSWORD}" in the "password" field
     And I click the "Submit" button
     Then I should see an error message "Invalid login credentials. Please try again."
 
   Scenario: User enters an invalid password
     Given I am on the "sign-in" page
-    When I enter a valid "{env.EMAIL}" in the "email" field
-    And I enter an invalid "wrongpassword" in the "password" field
+    When I enter "{env.EMAIL}" in the "email" field
+    And I enter "wrongpassword" in the "password" field
     And I click the "Submit" button
     Then I should see an error message "Invalid login credentials. Please try again."
 
   Scenario: User enters an invalid email format
     Given I am on the "sign-in" page
-    When I enter an invalid "testmail" in the "email" field
-    And I enter a valid "{env.PASSWORD}" in the "password" field
+    When I enter "testmail" in the "email" field
+    And I enter "{env.PASSWORD}" in the "password" field
     And I click the "Submit" button
     # Then I should see an error message "Invalid login credentials. Please try again."

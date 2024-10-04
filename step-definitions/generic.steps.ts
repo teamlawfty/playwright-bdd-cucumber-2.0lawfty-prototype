@@ -1,7 +1,7 @@
 import { Given, When, Then, After, setDefaultTimeout, Before } from '@cucumber/cucumber';
 import { expect } from '@playwright/test';
 import * as dotenv from 'dotenv';
-import { initializeBrowser, closeBrowser, getPage } from '../helpers/playwrightContext';
+import { initializeBrowser, closeBrowser, getPage, retry } from '../helpers/playwrightContext';
 
 dotenv.config();
 
@@ -9,16 +9,19 @@ setDefaultTimeout(25000);
 
 Before(async () => {
     await initializeBrowser();
+    await new Promise(resolve => setTimeout(resolve, 1000));
 });
 
 After(async () => {
     await closeBrowser();
+    await new Promise(resolve => setTimeout(resolve, 1000));
 });
 
 When(/^I navigate to "(.+)"$/, async (path: string) => {
     const page = getPage(); // Get the page instance
     const url = process.env.HOST + path;
-    await page.goto(url);
+    // await page.goto(url);
+    await retry(() => page.goto(url, { waitUntil: 'networkidle' }));
 });
 
 When(/^I click the "(.+)" (button|link)$/, async (buttonText: string, elementType: string) => {
@@ -48,8 +51,8 @@ When(/^I click the "(.+)" (button|link)$/, async (buttonText: string, elementTyp
 
     // Attempt to locate and click the element using each locator strategy
     let elementFound = false;
-    for (const locator of locators) {
-        try {
+    await retry(async () => {
+        for (const locator of locators) {
             const element = page.locator(locator);
             if (await element.count() > 0) {
                 await element.waitFor({ state: 'visible', timeout: 5000 });
@@ -57,11 +60,12 @@ When(/^I click the "(.+)" (button|link)$/, async (buttonText: string, elementTyp
                 elementFound = true;
                 break;
             }
-        } catch (error) {
-
-            console.warn(`Failed to locate using strategy: ${locator}`, error);
         }
-    }
+
+        if (!elementFound) {
+            throw new Error(`Failed to locate the ${elementType} with text: "${buttonText}" using available locator strategies.`);
+        }
+    });
 
     if (!elementFound) {
         throw new Error(`Failed to click the ${elementType} with text: "${buttonText}" using the available locator strategies.`);
@@ -130,29 +134,30 @@ Then(/^I should see the "(.+)" (field|button|checkbox|link|textarea)$/, async (l
             throw new Error(`Unknown element type: ${elementType}`);
     }
 
+    // Wrap the element visibility check in the retry function
     let elementFound = false;
-    for (const locator of locators) {
-        const element = page.locator(locator);
-        if (await element.count() > 0) {
-            try {
-
+    await retry(async () => {
+        for (const locator of locators) {
+            await page.waitForLoadState('networkidle');
+            const element = page.locator(locator);
+            if (await element.count() > 0) {
                 await element.scrollIntoViewIfNeeded();
-                await element.waitFor({ state: 'visible', timeout: 25000 });
+                await element.waitFor({ state: 'visible', timeout: 10000 });
                 await expect(element).toBeVisible();
                 elementFound = true;
                 break;
-
-            } catch (error) {
-                console.warn(`Failed to interact with element using locator: ${locator}`, error);
             }
         }
-    }
+
+        if (!elementFound) {
+            throw new Error(`Element "${label}" of type "${elementType}" not found using the available locator strategies.`);
+        }
+    });
 
     if (!elementFound) {
         throw new Error(`Element "${label}" of type "${elementType}" not found using the available locator strategies.`);
     }
 });
-
 
 When(/^I press the "(.*)" key$/, async (key: string) => {
     const page = getPage();
@@ -181,7 +186,8 @@ Given(/^I am on the "([^"]*)" page$/, async (pageName: string) => {
         throw new Error(`Page "${pageName}" is not defined in the pages mapping.`);
     }
 
-    await page.goto(pages[pageName]);
+    // await page.goto(pages[pageName]);
+    await retry(() => page.goto(pages[pageName], { waitUntil: 'networkidle' }));
 });
 
 Given(/^I am a user who needs to sign in$/, async () => {
@@ -200,7 +206,7 @@ Then(/^the focus should move sequentially through the "(.*)", "(.*)", "(.*)" che
     await expect(page.locator(`button[type="${buttonField.toLowerCase()}"]`)).toBeFocused();
 });
 
-When(/^I enter (a valid|an invalid) "(.*)" in the "(.+)" (field|input|textarea)$/, async (validity: string, value: string, fieldName: string, elementType: string) => {
+When(/^I enter "(.*)" in the "(.+)" (field|input|textarea)$/, async (value: string, fieldName: string, elementType: string) => {
     const page = getPage();
     const envVarPattern = /^\{env\.(.+)\}$/;
     const match = value.match(envVarPattern);
@@ -214,11 +220,13 @@ When(/^I enter (a valid|an invalid) "(.*)" in the "(.+)" (field|input|textarea)$
         ? `input[name="${fieldName}"]`
         : `textarea[name="${fieldName.toLowerCase()}"]`;
 
-    const element = page.locator(locator);
-    await element.scrollIntoViewIfNeeded();
-    await element.focus();
-
-    await element.fill(value);
+    await retry(async () => {
+        const element = page.locator(locator);
+        await element.scrollIntoViewIfNeeded();
+        await element.waitFor({ state: 'visible', timeout: 5000 });
+        await element.focus();
+        await element.fill(value);
+    });
 });
 
 When(/^I click "([^"]*)" button and select "([^"]*)" from the "([^"]*)" dropdown$/, async (buttonName: string, option: string, dropdownName: string) => {

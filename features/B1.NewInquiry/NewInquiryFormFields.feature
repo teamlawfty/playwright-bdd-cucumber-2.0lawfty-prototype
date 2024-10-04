@@ -2,8 +2,8 @@ Feature: New Inquiry Form Fields
 
     Scenario: User successfully navigates to the New Inquiry form page
         Given I am on the "sign-in" page
-        When I enter a valid "{env.EMAIL}" in the "email" field
-        And I enter a valid "{env.PASSWORD}" in the "password" field
+        When I enter "{env.EMAIL}" in the "email" field
+        And I enter "{env.PASSWORD}" in the "password" field
         And I check the "Remember me" checkbox
         And I click the "Submit" button
         Then I should see the "Dashboard" text
@@ -39,15 +39,15 @@ Feature: New Inquiry Form Fields
 
     Scenario: User submits a New Inquiry form
         Given I am on the "sign-in" page
-        When I enter a valid "{env.EMAIL}" in the "email" field
-        And I enter a valid "{env.PASSWORD}" in the "password" field
+        When I enter "{env.EMAIL}" in the "email" field
+        And I enter "{env.PASSWORD}" in the "password" field
         And I check the "Remember me" checkbox
         And I click the "Submit" button
         Then I should see the "Dashboard" text
         Given I am on the "inquiries" page
         When I navigate to "/inquiries/new"
         When I click "state" button and select "AL" from the "state" dropdown
-        And I enter a valid "1991/01/17" in the "inquiryTime" field
+        And I enter "1991/01/17" in the "inquiryTime" field
         And I click "caseType" button and select "ANIMAL_BITE" from the "caseType" dropdown
         And I click "sourceId" button and select "adroll" from the "sourceId" dropdown
         And I click the "Submit" button
