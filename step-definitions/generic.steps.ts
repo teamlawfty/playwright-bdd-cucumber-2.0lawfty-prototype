@@ -1,7 +1,7 @@
 import { Given, When, Then, After, setDefaultTimeout, Before } from '@cucumber/cucumber';
 import { expect } from '@playwright/test';
 import * as dotenv from 'dotenv';
-import { initializeBrowser, closeBrowser, getPage } from '../helpers/playwrightContext'; 
+import { initializeBrowser, closeBrowser, getPage, retry } from '../helpers/playwrightContext';
 
 dotenv.config();
 
@@ -9,16 +9,19 @@ setDefaultTimeout(25000);
 
 Before(async () => {
     await initializeBrowser();
+    await new Promise(resolve => setTimeout(resolve, 1000));
 });
 
 After(async () => {
     await closeBrowser();
+    await new Promise(resolve => setTimeout(resolve, 1000));
 });
 
 When(/^I navigate to "(.+)"$/, async (path: string) => {
     const page = getPage(); // Get the page instance
     const url = process.env.HOST + path;
-    await page.goto(url);
+    // await page.goto(url);
+    await retry(() => page.goto(url, { waitUntil: 'networkidle' }));
 });
 
 When(/^I click the "(.+)" (button|link)$/, async (buttonText: string, elementType: string) => {
@@ -27,20 +30,20 @@ When(/^I click the "(.+)" (button|link)$/, async (buttonText: string, elementTyp
 
     if (elementType === 'button') {
         locators = [
-            `button[type="${buttonText.toLowerCase()}"]`,              
+            `button[type="${buttonText.toLowerCase()}"]`,
             `button[id="${buttonText.toLowerCase()}"]`,
-            `button[id="${buttonText}"]`,                  
-            `button:has-text("${buttonText}")`,                        
-            `button[name="${buttonText.toLowerCase()}"]`,               
-            `button:has-text("${buttonText.toLowerCase()}")`,           
-            `//button[contains(text(), "${buttonText}")]`,              
-            `//input[@type="button" and @value="${buttonText}"]`,       
+            `button[id="${buttonText}"]`,
+            `button:has-text("${buttonText}")`,
+            `button[name="${buttonText.toLowerCase()}"]`,
+            `button:has-text("${buttonText.toLowerCase()}")`,
+            `//button[contains(text(), "${buttonText}")]`,
+            `//input[@type="button" and @value="${buttonText}"]`,
         ];
     } else if (elementType === 'link') {
         locators = [
-            `a:has-text("${buttonText}")`,                            
-            `a[id="${buttonText.toLowerCase()}"]`,                    
-            `a[href="${buttonText}"]`,                                
+            `a:has-text("${buttonText}")`,
+            `a[id="${buttonText.toLowerCase()}"]`,
+            `a[href="${buttonText}"]`,
         ];
     } else {
         throw new Error(`Unknown element type: ${elementType}`);
@@ -48,20 +51,21 @@ When(/^I click the "(.+)" (button|link)$/, async (buttonText: string, elementTyp
 
     // Attempt to locate and click the element using each locator strategy
     let elementFound = false;
-    for (const locator of locators) {
-        try {
+    await retry(async () => {
+        for (const locator of locators) {
             const element = page.locator(locator);
             if (await element.count() > 0) {
                 await element.waitFor({ state: 'visible', timeout: 5000 });
                 await element.click({ timeout: 20000 });
                 elementFound = true;
-                break; 
+                break;
             }
-        } catch (error) {
-            
-            console.warn(`Failed to locate using strategy: ${locator}`, error);
         }
-    }
+
+        if (!elementFound) {
+            throw new Error(`Failed to locate the ${elementType} with text: "${buttonText}" using available locator strategies.`);
+        }
+    });
 
     if (!elementFound) {
         throw new Error(`Failed to click the ${elementType} with text: "${buttonText}" using the available locator strategies.`);
@@ -91,7 +95,7 @@ Then(/^I should see the "(.+)" (field|button|checkbox|link|textarea)$/, async (l
                 `input[name="${label}"]`,
                 `input[id="${label.toLowerCase()}"]`,
                 `input[id="${label}"]`,
-                `input[placeholder="${label}"]`, 
+                `input[placeholder="${label}"]`,
                 `//label[contains(text(), "${label}")]/following-sibling::input`
             ];
             break;
@@ -108,7 +112,7 @@ Then(/^I should see the "(.+)" (field|button|checkbox|link|textarea)$/, async (l
                 `button[id="${label}"]`,
                 `button[id="${label.toLowerCase()}"]`,
                 `//button[contains(text(), "${label}")]`,
-                `//input[@type="button" and @value="${label}"]`, 
+                `//input[@type="button" and @value="${label}"]`,
             ];
             break;
         case 'checkbox':
@@ -122,7 +126,7 @@ Then(/^I should see the "(.+)" (field|button|checkbox|link|textarea)$/, async (l
         case 'link':
             locators = [
                 `a[href="${label}"]`,
-                `a:has-text("${label}")`, 
+                `a:has-text("${label}")`,
                 `a[id="${label.toLowerCase()}"]`
             ];
             break;
@@ -130,20 +134,30 @@ Then(/^I should see the "(.+)" (field|button|checkbox|link|textarea)$/, async (l
             throw new Error(`Unknown element type: ${elementType}`);
     }
 
+    // Wrap the element visibility check in the retry function
     let elementFound = false;
-    for (const locator of locators) {
-        if (await page.locator(locator).count() > 0) {
-            await expect(page.locator(locator)).toBeVisible();
-            elementFound = true;
-            break; 
+    await retry(async () => {
+        for (const locator of locators) {
+            await page.waitForLoadState('networkidle');
+            const element = page.locator(locator);
+            if (await element.count() > 0) {
+                await element.scrollIntoViewIfNeeded();
+                await element.waitFor({ state: 'visible', timeout: 10000 });
+                await expect(element).toBeVisible();
+                elementFound = true;
+                break;
+            }
         }
-    }
+
+        if (!elementFound) {
+            throw new Error(`Element "${label}" of type "${elementType}" not found using the available locator strategies.`);
+        }
+    });
 
     if (!elementFound) {
         throw new Error(`Element "${label}" of type "${elementType}" not found using the available locator strategies.`);
     }
 });
-
 
 When(/^I press the "(.*)" key$/, async (key: string) => {
     const page = getPage();
@@ -172,7 +186,8 @@ Given(/^I am on the "([^"]*)" page$/, async (pageName: string) => {
         throw new Error(`Page "${pageName}" is not defined in the pages mapping.`);
     }
 
-    await page.goto(pages[pageName]);
+    // await page.goto(pages[pageName]);
+    await retry(() => page.goto(pages[pageName], { waitUntil: 'networkidle' }));
 });
 
 Given(/^I am a user who needs to sign in$/, async () => {
@@ -191,7 +206,7 @@ Then(/^the focus should move sequentially through the "(.*)", "(.*)", "(.*)" che
     await expect(page.locator(`button[type="${buttonField.toLowerCase()}"]`)).toBeFocused();
 });
 
-When(/^I enter (a valid|an invalid) "(.*)" in the "(.+)" (field|input|textarea)$/, async (validity: string, value: string, fieldName: string, elementType: string) => {
+When(/^I enter "(.*)" in the "(.+)" (field|input|textarea)$/, async (value: string, fieldName: string, elementType: string) => {
     const page = getPage();
     const envVarPattern = /^\{env\.(.+)\}$/;
     const match = value.match(envVarPattern);
@@ -202,10 +217,36 @@ When(/^I enter (a valid|an invalid) "(.*)" in the "(.+)" (field|input|textarea)$
     }
 
     const locator = elementType === 'field' || elementType === 'input'
-        ? `input[name="${fieldName.toLowerCase()}"]`
+        ? `input[name="${fieldName}"]`
         : `textarea[name="${fieldName.toLowerCase()}"]`;
 
-    await page.fill(locator, value);
+    await retry(async () => {
+        const element = page.locator(locator);
+        await element.scrollIntoViewIfNeeded();
+        await element.waitFor({ state: 'visible', timeout: 5000 });
+        await element.focus();
+        await element.fill(value);
+    });
+});
+
+When(/^I click "([^"]*)" button and select "([^"]*)" from the "([^"]*)" dropdown$/, async (buttonName: string, option: string, dropdownName: string) => {
+    const page = getPage();
+
+    const dropdownButtonLocator = page.locator(`[id="${buttonName}"]`);
+
+    await dropdownButtonLocator.scrollIntoViewIfNeeded();
+    await dropdownButtonLocator.waitFor({ state: 'visible', timeout: 5000 });
+    await dropdownButtonLocator.click();
+
+    const dropdownLocator = page.locator(`select[name="${dropdownName}"]`);
+    await dropdownLocator.scrollIntoViewIfNeeded();
+    await dropdownLocator.waitFor({ state: 'visible', timeout: 5000 });
+
+    await page.waitForTimeout(1000);
+
+    await dropdownLocator.selectOption({ value: option });
+
+    await page.keyboard.press('Escape');
 });
 
 Then(/^I should see a dropdown for "([^"]*)" with options:$/, async (dropdownName: string, expectedOptionsTable) => {
@@ -220,7 +261,7 @@ Then(/^I should see a dropdown for "([^"]*)" with options:$/, async (dropdownNam
 
     await dropdownTriggerLocator.click();
 
-    await page.waitForTimeout(1000); 
+    await page.waitForTimeout(1000);
 
     await page.keyboard.press('Escape');
 
@@ -228,12 +269,12 @@ Then(/^I should see a dropdown for "([^"]*)" with options:$/, async (dropdownNam
 
     await dropdownTriggerLocator.click();
 
-    const customOptionsContainer = page.locator('[role="listbox"], .dropdown-container'); 
+    const customOptionsContainer = page.locator('[role="listbox"], .dropdown-container');
     await customOptionsContainer.waitFor({ state: 'visible', timeout: 5000 });
 
     await customOptionsContainer.scrollIntoViewIfNeeded();
 
-    const visibleOptions = customOptionsContainer.locator('[role="option"], .dropdown-item'); 
+    const visibleOptions = customOptionsContainer.locator('[role="option"], .dropdown-item');
     await visibleOptions.first().waitFor({ state: 'visible', timeout: 5000 });
 
     const actualOptions = await visibleOptions.evaluateAll((elements) => {
@@ -242,16 +283,6 @@ Then(/^I should see a dropdown for "([^"]*)" with options:$/, async (dropdownNam
 
     expect(actualOptions).toEqual(expectedOptions);
 });
-
-
-
-
-
-
-
-
-
-
 
 
 
