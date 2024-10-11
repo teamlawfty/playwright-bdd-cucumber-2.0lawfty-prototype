@@ -1,6 +1,5 @@
 import { fixupConfigRules, fixupPluginRules } from '@eslint/compat';
 import typescriptEslint from '@typescript-eslint/eslint-plugin';
-import react from 'eslint-plugin-react';
 import globals from 'globals';
 import tsParser from '@typescript-eslint/parser';
 import path from 'node:path';
@@ -30,15 +29,12 @@ export default [
     compat.extends(
       'eslint:recommended',
       'plugin:@typescript-eslint/recommended',
-      'plugin:react/recommended',
-      'plugin:react-hooks/recommended',
-      'prettier',
+      'prettier', // Keep Prettier for code formatting
     ),
   ),
   {
     plugins: {
       '@typescript-eslint': fixupPluginRules(typescriptEslint),
-      react: fixupPluginRules(react),
     },
 
     languageOptions: {
@@ -46,27 +42,12 @@ export default [
         ...globals.node,
         ...globals.browser,
       },
-
       parser: tsParser,
       ecmaVersion: 'latest',
       sourceType: 'module',
     },
 
-    settings: {
-      react: {
-        createClass: 'createReactClass',
-        pragma: 'React',
-        fragment: 'Fragment',
-        version: 'detect',
-        flowVersion: '0.53',
-      },
-    },
-
     rules: {
-      'react/prop-types': 'off',
-      'react/react-in-jsx-scope': 'off',
-      'react/no-children-prop': 'off',
-      'react/no-unescaped-entities': 'off',
       'no-console': 1,
       // Allow unused variables that start with an underscore
       '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_' }],
@@ -79,7 +60,6 @@ export default [
       globals: {
         ...globals.node,
       },
-
       ecmaVersion: 5,
       sourceType: 'commonjs',
     },
