@@ -86,6 +86,7 @@ When(/^I (check|uncheck) the "(.+)" checkbox$/, async (action: string, label: st
 Then(/^I should see the "(.+)" (field|button|checkbox|link|textarea)$/, async (label: string, elementType: string) => {
   const page = getPage();
   let locators: string[] = []; // Array to hold possible locators
+  // test
 
   switch (elementType) {
     case 'field':
