@@ -6,9 +6,10 @@ const common = [
   // '--require step-definitions/NewInquiryFormFields.steps.ts', // Load step definitions
   '--require step-definitions/generic.steps.ts',
   '--format progress', // Show progress during test execution
-  '--parallel 0'
-].join(' ');
+  '--parallel 0',
+].join(' ')
 
+// eslint-disable-next-line no-undef
 module.exports = {
   default: common,
-};
+}
