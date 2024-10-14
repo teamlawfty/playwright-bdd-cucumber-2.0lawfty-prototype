@@ -49,4 +49,5 @@ Feature: Sign-in page
     When I enter "testmail" in the "email" field
     And I enter "{env.PASSWORD}" in the "password" field
     And I click the "Submit" button
-    # Then I should see an error message "Invalid login credentials. Please try again."
+
+# Then I should see an error message "Invalid login credentials. Please try again."

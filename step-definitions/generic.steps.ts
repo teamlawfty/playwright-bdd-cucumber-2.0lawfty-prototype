@@ -162,7 +162,7 @@ When(/^I press the "(.*)" key$/, async (key: string) => {
 
 Then(/^I should see the "(.*)" text$/, async (text: string) => {
   const page = getPage();
-  await expect(page.locator(`//span[contains(text(), "${text}")]`)).toBeVisible();
+  await expect(page.locator(`//span[contains(text(), "${text}")] | //h1[contains(text(), "${text}")]`)).toBeVisible();
 });
 
 Then(/^I should see (an error|normal) message "([^"]*)"$/, async (messageType: string, expectedMessage: string) => {

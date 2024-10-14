@@ -6,6 +6,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import js from '@eslint/js';
 import { FlatCompat } from '@eslint/eslintrc';
+import cucumberPlugin from 'eslint-plugin-cucumber';  // Import the cucumber plugin
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -29,12 +30,14 @@ export default [
     compat.extends(
       'eslint:recommended',
       'plugin:@typescript-eslint/recommended',
+      'plugin:prettier/recommended',
       'prettier', // Keep Prettier for code formatting
     ),
   ),
   {
     plugins: {
       '@typescript-eslint': fixupPluginRules(typescriptEslint),
+      cucumber: fixupPluginRules(cucumberPlugin), // Fix: Initialize cucumber plugin correctly
     },
 
     languageOptions: {
@@ -51,6 +54,15 @@ export default [
       'no-console': 1,
       // Allow unused variables that start with an underscore
       '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_' }],
+    },
+  },
+  {
+    // Specific rule set for .feature files (Cucumber)
+    files: ['**/*.feature'],
+    plugins: ['cucumber'],
+    rules: {
+      'cucumber/consistent-feature-file-naming': 'error', // Example cucumber-specific rule
+      'cucumber/no-empty-step': 'error',  // Ensure steps are not empty
     },
   },
   {

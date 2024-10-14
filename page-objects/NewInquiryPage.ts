@@ -1,11 +1,10 @@
-import { Page } from '@playwright/test'
+import { Page } from '@playwright/test';
 
 export class NewInquiryPage {
-  // eslint-disable-next-line no-unused-vars
   constructor(private page: Page) {}
 
   async navigateToNewInquiryPage(url: string) {
-    await this.page.goto(url)
+    await this.page.goto(url);
   }
 
   async verifyFormFieldsVisible() {
@@ -33,9 +32,9 @@ export class NewInquiryPage {
       'input[name="zip"]',
       'input[name="streakBoxKey"]',
       'button[type="submit"]',
-    ]
+    ];
     for (const field of fields) {
-      await this.page.waitForSelector(field)
+      await this.page.waitForSelector(field);
     }
   }
 
@@ -61,98 +60,89 @@ export class NewInquiryPage {
       State: 'select[name="state"]',
       Zip: 'input[name="zip"]',
       'Streak Box Key': 'input[name="streakBoxKey"]',
-    }
+    };
 
     for (const fieldName of fieldNames) {
-      const selector = fieldSelectors[fieldName]
+      const selector = fieldSelectors[fieldName];
       if (selector) {
-        await this.page.waitForSelector(selector, { state: 'visible' })
+        await this.page.waitForSelector(selector, { state: 'visible' });
       } else {
-        throw new Error(`No selector defined for field name: ${fieldName}`)
+        throw new Error(`No selector defined for field name: ${fieldName}`);
       }
     }
   }
 
   async verifyDropdownOptions(dropdownName: string, options: string[]) {
-    const dropdown = this.page.locator(`select[name="${dropdownName}"]`)
-    const dropdownButton = this.page.locator(
-      `button[role="combobox"][aria-label="kind"]`,
-    )
+    const dropdown = this.page.locator(`select[name="${dropdownName}"]`);
+    const dropdownButton = this.page.locator(`button[role="combobox"][aria-label="kind"]`);
 
-    await dropdown.scrollIntoViewIfNeeded()
+    await dropdown.scrollIntoViewIfNeeded();
 
-    await dropdownButton.click()
+    await dropdownButton.click();
 
     for (const option of options) {
-      this.page.locator(`option[value="${option}"]`).isVisible()
+      this.page.locator(`option[value="${option}"]`).isVisible();
     }
   }
 
   async selectCampaign() {
-    const dropdownButton = this.page.locator(
-      'button[type="button"][aria-label="campaignId"]',
-    )
+    const dropdownButton = this.page.locator('button[type="button"][aria-label="campaignId"]');
 
-    await dropdownButton.scrollIntoViewIfNeeded()
+    await dropdownButton.scrollIntoViewIfNeeded();
 
-    await dropdownButton.click({ force: true })
+    await dropdownButton.click({ force: true });
 
-    await this.page.selectOption('select[name="campaignId"]', 'alabama')
+    await this.page.selectOption('select[name="campaignId"]', 'alabama');
 
-    await this.page.click('body', { force: true })
+    await this.page.click('body', { force: true });
   }
 
   async enterInquiryDate() {
-    const inquiryDateInput = this.page.locator('input[name="inquiryTime"]')
-    await inquiryDateInput.fill('1991/01/17')
+    const inquiryDateInput = this.page.locator('input[name="inquiryTime"]');
+    await inquiryDateInput.fill('1991/01/17');
   }
 
   async selectCaseType() {
-    const dropdownButton = this.page.locator('button[aria-label="caseType"]')
-    await dropdownButton.scrollIntoViewIfNeeded()
+    const dropdownButton = this.page.locator('button[aria-label="caseType"]');
+    await dropdownButton.scrollIntoViewIfNeeded();
 
-    await dropdownButton.click({ force: true })
+    await dropdownButton.click({ force: true });
 
-    await this.page.selectOption('select[name="caseType"]', 'ANIMAL_BITE')
+    await this.page.selectOption('select[name="caseType"]', 'ANIMAL_BITE');
 
-    await this.page.click('body', { force: true })
+    await this.page.click('body', { force: true });
   }
 
   async selectSource() {
-    const dropdownButton = this.page.locator('button[aria-label="sourceId"]')
-    await dropdownButton.scrollIntoViewIfNeeded()
+    const dropdownButton = this.page.locator('button[aria-label="sourceId"]');
+    await dropdownButton.scrollIntoViewIfNeeded();
 
-    await dropdownButton.click({ force: true })
+    await dropdownButton.click({ force: true });
 
-    await this.page.selectOption('select[name="sourceId"]', 'adroll')
+    await this.page.selectOption('select[name="sourceId"]', 'adroll');
 
-    await this.page.click('body', { force: true })
+    await this.page.click('body', { force: true });
   }
 
   async submitInquiry() {
-    const submitButton = this.page.locator(
-      'button[type="submit"]:has-text("Create New Inquiry")',
-    )
+    const submitButton = this.page.locator('button[type="submit"]:has-text("Create New Inquiry")');
 
-    await submitButton.click()
+    await submitButton.click();
   }
 
   async enterFieldValue(fieldName: string, value: string) {
-    await this.page.fill(`input[name="${fieldName}"]`, value)
+    await this.page.fill(`input[name="${fieldName}"]`, value);
   }
 
   async selectDropdownOption(dropdownName: string, option: string) {
-    await this.page.selectOption(
-      `select[name="${dropdownName}"]`,
-      option.toLowerCase(),
-    )
+    await this.page.selectOption(`select[name="${dropdownName}"]`, option.toLowerCase());
   }
 
   async clickButton(buttonText: string) {
-    await this.page.click(`button:has-text("${buttonText}")`)
+    await this.page.click(`button:has-text("${buttonText}")`);
   }
 
   async verifyInquirySaved() {
-    await this.page.waitForSelector('text=Inquiry saved successfully')
+    await this.page.waitForSelector('text=Inquiry saved successfully');
   }
 }
