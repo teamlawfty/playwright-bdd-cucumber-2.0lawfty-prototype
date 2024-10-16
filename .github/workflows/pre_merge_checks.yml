@@ -65,6 +65,7 @@ jobs:
         with:
           repository: teamlawfty/lawfty5
           ref: master
+          token: ${{ secrets.PAT_TOKEN }}
           path: backend
 
       - name: Checkout frontend code
@@ -72,6 +73,7 @@ jobs:
         with:
           repository: teamlawfty/internal_lawfty5
           ref: main
+          token: ${{ secrets.PAT_TOKEN }}
           path: frontend
 
       - name: Install backend dependencies
