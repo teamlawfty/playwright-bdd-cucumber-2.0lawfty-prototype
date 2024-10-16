@@ -12,21 +12,15 @@ jobs:
     name: Lint & Typecheck
     runs-on: ubuntu-22.04
     steps:
-      - name: Checkout frontend code
-        uses: actions/checkout@v2
-        with:
-          repository: teamlawfty/internal_lawfty5 # Frontend repo
-          ref: main # Ensure correct branch
-
       - name: Install frontend dependencies
         run: |
           yarn install
 
-      - name: Run pre-commit lint checks (Frontend)
+      - name: Run pre-commit lint checks
         run: |
           yarn pre-commit-checks
 
-      - name: Run tsc (TypeScript Compiler for Frontend)
+      - name: Run tsc (TypeScript Compiler)
         run: |
           yarn tsc
 
@@ -35,7 +29,7 @@ jobs:
     runs-on: ubuntu-22.04
     env:
       HOST: ${{ secrets.HOST }} # Staging environment URL
-      EMAIL: ${{ secrets.EMAIL }} # Credentials and other environment variables
+      EMAIL: ${{ secrets.EMAIL }} # Credentials for testing
       PASSWORD: ${{ secrets.PASSWORD }}
       NEW_INQUIRY_URL: ${{ secrets.NEW_INQUIRY_URL }}
     steps:
