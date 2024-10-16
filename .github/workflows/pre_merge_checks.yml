@@ -1,3 +1,16 @@
+name: Pre-merge checks
+
+on:
+  pull_request:
+    types:
+      - opened
+      - synchronize
+      - reopened
+  push:
+    branches:
+      - main
+      - 'feature/*'
+
 jobs:
   lint-and-typecheck:
     name: Lint & Typecheck
@@ -15,7 +28,7 @@ jobs:
           yarn lint
 
       - name: Run tsc
-        if: always()
+        if: always() # This ensures tsc runs even if lint fails
         run: |
           yarn tsc
 
