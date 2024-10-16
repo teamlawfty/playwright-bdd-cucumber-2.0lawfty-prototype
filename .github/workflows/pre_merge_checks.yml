@@ -1,4 +1,5 @@
 name: Pre-merge checks
+
 on:
   pull_request:
     types:
@@ -11,87 +12,41 @@ jobs:
     name: Lint & Typecheck
     runs-on: ubuntu-22.04
     steps:
-      - name: Checkout backend code
-        uses: actions/checkout@v2
-        with:
-          repository: teamlawfty/lawfty5 # Backend repo
-          ref: main # Ensure correct branch
-          path: backend # Put the backend code in a 'backend' folder
-
       - name: Checkout frontend code
         uses: actions/checkout@v2
         with:
           repository: teamlawfty/internal_lawfty5 # Frontend repo
           ref: main # Ensure correct branch
-          path: frontend # Put the frontend code in a 'frontend' folder
-
-      - name: Install backend dependencies
-        run: |
-          cd backend  # Change to backend directory
-          yarn install
 
       - name: Install frontend dependencies
         run: |
-          cd frontend  # Change to frontend directory
           yarn install
-
-      - name: Run pre-commit lint checks (Backend)
-        run: |
-          cd backend
-          yarn pre-commit-checks
 
       - name: Run pre-commit lint checks (Frontend)
         run: |
-          cd frontend
           yarn pre-commit-checks
 
-      - name: Run tsc (TypeScript Compiler for Backend)
-        if: always()
+      - name: Run tsc (TypeScript Compiler for Frontend)
         run: |
-          cd backend
           yarn tsc
-  #empty line
+
   test:
     name: Run Tests
     runs-on: ubuntu-22.04
     env:
-      HOST: ${{ secrets.HOST }}
-      EMAIL: ${{ secrets.EMAIL }}
+      HOST: ${{ secrets.HOST }} # Staging environment URL
+      EMAIL: ${{ secrets.EMAIL }} # Credentials and other environment variables
       PASSWORD: ${{ secrets.PASSWORD }}
       NEW_INQUIRY_URL: ${{ secrets.NEW_INQUIRY_URL }}
     steps:
-      - name: Checkout backend code
-        uses: actions/checkout@v2
-        with:
-          repository: teamlawfty/lawfty5
-          ref: master
-          token: ${{ secrets.PAT_TOKEN }}
-          path: backend
-
-      - name: Checkout frontend code
-        uses: actions/checkout@v2
-        with:
-          repository: teamlawfty/internal_lawfty5
-          ref: main
-          token: ${{ secrets.PAT_TOKEN }}
-          path: frontend
-
-      - name: Install backend dependencies
-        run: |
-          cd backend
-          yarn install
-
       - name: Install frontend dependencies
         run: |
-          cd frontend
           yarn install
 
       - name: Install Playwright browsers
         run: |
-          cd frontend
           npx playwright install
 
-      - name: Run tests (Frontend)
+      - name: Run Playwright tests
         run: |
-          cd frontend
           yarn test
