@@ -12,9 +12,9 @@ jobs:
     name: Lint & Typecheck
     runs-on: ubuntu-22.04
     steps:
-      - name: Install frontend dependencies
+      - name: Install dev dependencies
         run: |
-          yarn install
+          npm install
 
       - name: Run pre-commit lint checks
         run: |
@@ -25,7 +25,7 @@ jobs:
           yarn tsc
 
   test:
-    name: Run Tests
+    name: Run Playwright specs
     runs-on: ubuntu-22.04
     env:
       HOST: ${{ secrets.HOST }} # Staging environment URL
@@ -33,9 +33,9 @@ jobs:
       PASSWORD: ${{ secrets.PASSWORD }}
       NEW_INQUIRY_URL: ${{ secrets.NEW_INQUIRY_URL }}
     steps:
-      - name: Install frontend dependencies
+      - name: Install dev dependencies
         run: |
-          yarn install
+          npm install
 
       - name: Install Playwright browsers
         run: |
@@ -43,4 +43,4 @@ jobs:
 
       - name: Run Playwright tests
         run: |
-          yarn test
+          npm test
