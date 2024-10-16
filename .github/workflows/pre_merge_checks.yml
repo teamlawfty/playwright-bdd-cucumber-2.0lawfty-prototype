@@ -1,0 +1,39 @@
+name: Pre-merge checks
+on:
+  pull_request:
+    types:
+      - opened
+      - synchronize
+      - reopened
+
+jobs:
+  lint-and-typecheck:
+    name: Lint & Typecheck
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - uses: ./.github/shared/setup-environment # If you have a shared environment setup, otherwise remove
+
+      - name: Run eslint
+        run: |
+          yarn lint
+
+      - name: Run tsc
+        if: always()
+        run: |
+          yarn tsc
+
+  test:
+    name: Run Tests
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - uses: ./.github/shared/setup-environment # If you have a shared environment setup, otherwise remove
+
+      - name: Run tests
+        run: |
+          yarn test
