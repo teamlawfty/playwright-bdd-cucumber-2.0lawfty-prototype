@@ -6,7 +6,6 @@ on:
       - opened
       - synchronize
       - reopened
-  push: # This will trigger the workflow on every push
 
 jobs:
   lint-and-typecheck:
@@ -19,7 +18,7 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: '16' # Ensure you're using the correct Node.js version for your project
+          node-version: '20'
 
       - name: Install dependencies
         run: |
@@ -37,8 +36,8 @@ jobs:
     name: Run Playwright specs
     runs-on: ubuntu-22.04
     env:
-      HOST: ${{ secrets.HOST }} # Staging environment URL
-      EMAIL: ${{ secrets.EMAIL }} # Credentials for testing
+      HOST: ${{ secrets.HOST }}
+      EMAIL: ${{ secrets.EMAIL }}
       PASSWORD: ${{ secrets.PASSWORD }}
       NEW_INQUIRY_URL: ${{ secrets.NEW_INQUIRY_URL }}
     steps:
@@ -48,7 +47,7 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: '16' # Ensure you're using the correct Node.js version
+          node-version: '20'
 
       - name: Install dependencies
         run: |
