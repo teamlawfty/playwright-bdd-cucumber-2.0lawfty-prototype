@@ -11,42 +11,142 @@ jobs:
     name: Lint & Typecheck
     runs-on: ubuntu-22.04
     steps:
-      - name: Checkout code
+      # Step 1: Checkout frontend repo (cloning the repo into frontend directory)
+      - name: Checkout frontend code
         uses: actions/checkout@v2
+        with:
+          repository: teamlawfty/internal_lawfty5 # frontend repo
+          path: frontend # check it out into the 'frontend' directory
 
-      - name: Install dependencies
+      # Step 2: Checkout backend repo (cloning the repo into backend directory)
+      - name: Checkout backend code
+        uses: actions/checkout@v2
+        with:
+          repository: teamlawfty/lawfty5 # backend repo
+          path: backend # check it out into the 'backend' directory
+
+      # Install frontend dependencies
+      - name: Install frontend dependencies
         run: |
+          cd frontend
           yarn install
 
-      - name: Run pre-commit lint checks
+      # Install backend dependencies
+      - name: Install backend dependencies
         run: |
+          cd backend
+          gem install bundler -v 2.1.4
+          bundle install
+
+      # Run lint checks on the frontend code
+      - name: Run pre-commit lint checks (frontend)
+        run: |
+          cd frontend
           yarn pre-commit-checks
 
+      # Type check frontend code
       - name: Run tsc
-        if: always()
         run: |
+          cd frontend
           yarn tsc
 
   test:
     name: Run Tests
     runs-on: ubuntu-22.04
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+      redis:
+        image: redis
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
     env:
+      DATABASE_URL: postgres://postgres:postgres@localhost:5432/test_db
+      REDIS_URL: redis://localhost:6379
       HOST: ${{ secrets.HOST }}
       EMAIL: ${{ secrets.EMAIL }}
       PASSWORD: ${{ secrets.PASSWORD }}
       NEW_INQUIRY_URL: ${{ secrets.NEW_INQUIRY_URL }}
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v2
 
-      - name: Install dependencies
+    steps:
+      # Step 1: Checkout frontend repo (cloning the repo into frontend directory)
+      - name: Checkout frontend code
+        uses: actions/checkout@v2
+        with:
+          repository: teamlawfty/internal_lawfty5 # frontend repo
+          path: frontend # check it out into the 'frontend' directory
+
+      # Step 2: Checkout backend repo (cloning the repo into backend directory)
+      - name: Checkout backend code
+        uses: actions/checkout@v2
+        with:
+          repository: teamlawfty/lawfty5 # backend repo
+          path: backend # check it out into the 'backend' directory
+
+      # Step 3: Install frontend dependencies
+      - name: Install frontend dependencies
         run: |
+          cd frontend
           yarn install
 
+      # Step 4: Install backend dependencies
+      - name: Install backend dependencies
+        run: |
+          cd backend
+          gem install bundler -v 2.1.4
+          bundle install
+
+      # Step 5: Install Playwright browsers (frontend)
       - name: Install Playwright browsers
         run: |
+          cd frontend
           npx playwright install
 
+      # Step 6: Set up the database (Postgres) for the backend
+      - name: Set up backend database
+        run: |
+          cd backend
+          bundle exec rails db:create
+          bundle exec rails db:migrate
+
+      # Step 7: Start backend server in the background
+      - name: Start backend server
+        run: |
+          cd backend
+          bundle exec rails s -b 0.0.0.0 -p 3000 &
+          sleep 15  # Allow backend enough time to start
+
+      # Step 8: Start frontend server in the background
+      - name: Start frontend server
+        run: |
+          cd frontend
+          yarn dev --port 3001 &
+          sleep 15  # Allow frontend server enough time to start
+
+      # Step 9: Wait for backend and frontend services to be ready
+      - name: Wait for services
+        run: |
+          npx wait-on http://localhost:3000
+          npx wait-on http://localhost:3001
+
+      # Step 10: Run tests (frontend)
       - name: Run tests
         run: |
+          cd frontend
           yarn test
