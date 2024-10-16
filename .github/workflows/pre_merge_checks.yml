@@ -1,15 +1,10 @@
 name: Pre-merge checks
-
 on:
   pull_request:
     types:
       - opened
       - synchronize
       - reopened
-  push:
-    branches:
-      - main
-      - 'feature/*'
 
 jobs:
   lint-and-typecheck:
@@ -27,8 +22,12 @@ jobs:
         run: |
           yarn lint
 
+      - name: Run pre-commit lint checks
+        run: |
+          yarn pre-commit-checks
+
       - name: Run tsc
-        if: always() # This ensures tsc runs even if lint fails
+        if: always()
         run: |
           yarn tsc
 
@@ -42,6 +41,10 @@ jobs:
       - name: Install dependencies
         run: |
           yarn install
+
+      - name: Install Playwright browsers
+        run: |
+          npx playwright install
 
       - name: Run tests
         run: |
