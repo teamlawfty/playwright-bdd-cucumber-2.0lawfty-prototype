@@ -1,9 +1,9 @@
 name: Run Playwright Tests
 
 on:
-  # Schedule to run daily at midnight UTC
+  # Schedule to run every day at 10 AM EST
   schedule:
-    - cron: '0 0 * * *'
+    - cron: '0 15 * * *'
 
   # Manual trigger
   workflow_dispatch:

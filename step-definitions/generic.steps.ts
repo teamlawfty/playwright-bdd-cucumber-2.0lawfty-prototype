@@ -8,28 +8,36 @@ dotenv.config();
 setDefaultTimeout(25000);
 
 BeforeAll(async () => {
+  console.log('Starting test suite...');
   await deleteOldTraces();
+  console.log('Old traces deleted.');
 });
 
 Before(async () => {
+  console.log('Initializing browser...');
   await initializeBrowser();
   await new Promise((resolve) => setTimeout(resolve, 1000));
+  console.log('Browser initialized.');
 });
 
 After(async () => {
+  console.log('Closing browser...');
   await closeBrowser();
   await new Promise((resolve) => setTimeout(resolve, 1000));
+  console.log('Browser closed.');
 });
 
 When(/^I navigate to "(.+)"$/, async (path: string) => {
   const page = getPage(); // Get the page instance
   const url = process.env.HOST + path;
-  await retry(() => page.goto(url, { waitUntil: 'networkidle' }));
   console.log(`Navigating to ${url}`);
+  await retry(() => page.goto(url, { waitUntil: 'networkidle' }));
+  console.log(`Successfully navigated to ${url}`);
 });
 
 When(/^I click the "(.+)" (button|link)$/, async (buttonText: string, elementType: string) => {
   const page = getPage();
+  console.log(`Attempting to click the "${buttonText}" ${elementType}...`);
   let locators: string[] = []; // Array to hold possible locators
 
   if (elementType === 'button') {
@@ -57,6 +65,7 @@ When(/^I click the "(.+)" (button|link)$/, async (buttonText: string, elementTyp
     for (const locator of locators) {
       const element = page.locator(locator);
       if ((await element.count()) > 0) {
+        console.log(`Found "${buttonText}" ${elementType} with locator: ${locator}`);
         await element.waitFor({ state: 'visible', timeout: 5000 });
         await element.click({ timeout: 20000 });
         elementFound = true;
@@ -76,21 +85,30 @@ When(/^I click the "(.+)" (button|link)$/, async (buttonText: string, elementTyp
       `Failed to click the ${elementType} with text: "${buttonText}" using the available locator strategies.`,
     );
   }
+
+  if (elementFound) {
+    console.log(`Successfully clicked the ${elementType} with text: "${buttonText}"`);
+  }
 });
 
 When(/^I (check|uncheck) the "(.+)" checkbox$/, async (action: string, label: string) => {
   const page = getPage();
   const locator = `//label[contains(text(), "${label}")]`;
+  console.log(`Attempting to ${action} the checkbox with label "${label}"...`);
+
   if (action === 'check') {
     await page.check(locator);
+    console.log(`Successfully checked the checkbox with label "${label}".`);
   } else {
     await page.uncheck(locator);
+    console.log(`Successfully unchecked the checkbox with label "${label}".`);
   }
 });
 
 Then(/^I should see the "(.+)" (field|button|checkbox|link|textarea)$/, async (label: string, elementType: string) => {
   const page = getPage();
   let locators: string[] = [];
+  console.log(`Waiting for the "${label}" ${elementType} to be visible...`);
   await page.waitForLoadState('load');
 
   switch (elementType) {
@@ -142,6 +160,7 @@ Then(/^I should see the "(.+)" (field|button|checkbox|link|textarea)$/, async (l
       await page.waitForLoadState('networkidle');
       const element = page.locator(locator);
       if ((await element.count()) > 0) {
+        console.log(`Found "${label}" ${elementType} with locator: ${locator}`);
         await element.scrollIntoViewIfNeeded();
         await element.waitFor({ state: 'visible', timeout: 30000 });
         await expect(element).toBeVisible();
@@ -151,6 +170,7 @@ Then(/^I should see the "(.+)" (field|button|checkbox|link|textarea)$/, async (l
     }
 
     if (!elementFound) {
+      console.error(`Element "${label}" of type "${elementType}" not found.`);
       throw new Error(`Element "${label}" of type "${elementType}" not found using the available locator strategies.`);
     }
   });
@@ -158,21 +178,31 @@ Then(/^I should see the "(.+)" (field|button|checkbox|link|textarea)$/, async (l
   if (!elementFound) {
     throw new Error(`Element "${label}" of type "${elementType}" not found using the available locator strategies.`);
   }
+
+  if (elementFound) {
+    console.log(`Successfully located the "${label}" ${elementType}`);
+  }
 });
 
 When(/^I press the "(.*)" key$/, async (key: string) => {
   const page = getPage();
+  console.log(`Pressing the "${key}" key...`);
   await page.keyboard.press(key);
+  console.log(`Successfully pressed the "${key}" key.`);
 });
 
 Then(/^I should see the "(.*)" text$/, async (text: string) => {
   const page = getPage();
+  console.log(`Checking if the text "${text}" is visible...`);
   await expect(page.locator(`//span[contains(text(), "${text}")] | //h1[contains(text(), "${text}")]`)).toBeVisible();
+  console.log(`The text "${text}" is visible.`);
 });
 
 Then(/^I should see (an error|normal) message "([^"]*)"$/, async (messageType: string, expectedMessage: string) => {
   const page = getPage();
+  console.log(`Checking if the ${messageType} message "${expectedMessage}" is visible...`);
   await expect(page.locator(`//p[contains(text(), "${expectedMessage}")]`)).toBeVisible();
+  console.log(`The ${messageType} message "${expectedMessage}" is visible.`);
 });
 
 Given(/^I am on the "([^"]*)" page$/, async (pageName: string) => {
@@ -186,11 +216,14 @@ Given(/^I am on the "([^"]*)" page$/, async (pageName: string) => {
     throw new Error(`Page "${pageName}" is not defined in the pages mapping.`);
   }
 
+  console.log(`Navigating to the "${pageName}" page...`);
   await retry(() => page.goto(pages[pageName], { waitUntil: 'networkidle' }));
+  console.log(`Successfully navigated to the "${pageName}" page.`);
 });
 
 Given(/^I am a user who needs to sign in$/, async () => {
   const page = getPage();
+  console.log('Navigating to the sign-in page...');
   await page.goto(`${process.env.HOST}/login`);
 });
 
@@ -198,13 +231,20 @@ Then(
   /^the focus should move sequentially through the "(.*)", "(.*)", "(.*)" checkbox, and "(.*)" button$/,
   async (emailField: string, passwordField: string, checkboxField: string, buttonField: string) => {
     const page = getPage();
+    console.log(
+      `Verifying focus sequence for fields: "${emailField}", "${passwordField}", "${checkboxField}", and button: "${buttonField}"`,
+    );
     await expect(page.locator(`//input[@name="${emailField.toLowerCase()}"]`)).toBeFocused();
+    console.log(`Focus is on the "${emailField}" field`);
     await page.keyboard.press('Tab');
     await expect(page.locator(`//input[@name="${passwordField.toLowerCase()}"]`)).toBeFocused();
+    console.log(`Focus moved to the "${passwordField}" field`);
     await page.keyboard.press('Tab');
     await expect(page.locator(`//button[@role="checkbox"]`)).toBeFocused();
+    console.log(`Focus moved to the "${checkboxField}" checkbox`);
     await page.keyboard.press('Tab');
     await expect(page.locator(`//button[@type="${buttonField.toLowerCase()}"]`)).toBeFocused();
+    console.log(`Focus moved to the "${buttonField}" button`);
   },
 );
 
@@ -212,6 +252,8 @@ When(
   /^I enter "(.*)" in the "(.+)" (field|input|textarea)$/,
   async (value: string, fieldName: string, elementType: string) => {
     const page = getPage();
+    console.log(`Entering value "${value}" into the "${fieldName}" ${elementType}`);
+
     const envVarPattern = /^\{env\.(.+)\}$/;
     const match = value.match(envVarPattern);
 
@@ -232,6 +274,7 @@ When(
       await element.focus();
       await element.fill(value);
     });
+    console.log(`Successfully entered value "${value}" into the "${fieldName}" ${elementType}`);
   },
 );
 
@@ -239,6 +282,7 @@ When(
   /^I click "([^"]*)" button and select "([^"]*)" from the "([^"]*)" dropdown$/,
   async (buttonName: string, option: string, dropdownName: string) => {
     const page = getPage();
+    console.log(`Clicking the "${buttonName}" button and selecting "${option}" from the "${dropdownName}" dropdown`);
 
     const dropdownButtonLocator = page.locator(`//button[@id='${buttonName}']`);
 
@@ -255,11 +299,13 @@ When(
     await dropdownLocator.selectOption({ value: option });
 
     await page.keyboard.press('Escape');
+    console.log(`Successfully selected "${option}" from the "${dropdownName}" dropdown`);
   },
 );
 
 Then(/^I should see a dropdown for "([^"]*)" with options:$/, async (dropdownName: string, expectedOptionsTable) => {
   const page = getPage();
+  console.log(`Checking if dropdown "${dropdownName}" contains the expected options`);
 
   const expectedOptions = expectedOptionsTable.raw().flat();
 
@@ -291,4 +337,5 @@ Then(/^I should see a dropdown for "([^"]*)" with options:$/, async (dropdownNam
   });
 
   expect(actualOptions).toEqual(expectedOptions);
+  console.log(`Dropdown "${dropdownName}" contains the expected options.`);
 });
