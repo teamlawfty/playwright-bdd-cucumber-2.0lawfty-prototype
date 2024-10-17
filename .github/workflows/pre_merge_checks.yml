@@ -8,7 +8,7 @@ on:
       - reopened
   push:
     branches:
-      - main #test
+      - main
 jobs:
   lint-and-typecheck:
     name: Lint & Typecheck
@@ -42,7 +42,6 @@ jobs:
       EMAIL: ${{ secrets.EMAIL }}
       PASSWORD: ${{ secrets.PASSWORD }}
       NEW_INQUIRY_URL: ${{ secrets.NEW_INQUIRY_URL }}
-    timeout-minutes: 10
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
@@ -67,7 +66,6 @@ jobs:
       - name: Run Playwright tests
         run: |
           npm test
-        retries: 3
         continue-on-error: true
 
       - name: Upload Playwright trace
