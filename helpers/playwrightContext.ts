@@ -45,7 +45,7 @@ export async function deleteOldTraces() {
 export async function initializeBrowser() {
   await retry(async () => {
     if (!browser) {
-      browser = await playwright.chromium.launch({ headless: false });
+      browser = await playwright.chromium.launch({ headless: true });
     }
     if (!context) {
       context = await browser.newContext();
