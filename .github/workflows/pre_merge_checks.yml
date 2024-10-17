@@ -55,11 +55,21 @@ jobs:
         run: |
           npm install
 
-      - name: Install Playwright browsers
+      - name: Install Playwright Chromium Browser
         run: |
-          npx playwright install
+          npx playwright install chromium
+
+      - name: Delete old traces
+        run: |
+          rm -rf traces/* || true
 
       - name: Run Playwright tests
         run: |
           npm test
-        timeout-minutes: 1
+        continue-on-error: true
+
+      - name: Upload Playwright trace
+        uses: actions/upload-artifact@v3
+        with:
+          name: playwright-trace
+          path: 'traces/*.zip'

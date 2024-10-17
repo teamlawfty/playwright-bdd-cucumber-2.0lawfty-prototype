@@ -1,5 +1,7 @@
 import { Browser, BrowserContext, Page } from 'playwright';
 import playwright from 'playwright';
+import fs from 'fs';
+import path from 'path';
 
 let browser: Browser | undefined;
 let context: BrowserContext | undefined;
@@ -21,6 +23,25 @@ export const retry = async (fn: () => Promise<unknown>, retries = 3, delay = 200
   }
 };
 
+export async function deleteOldTraces() {
+  const tracesDir = path.join(__dirname, '../traces');
+  try {
+    const files = await fs.promises.readdir(tracesDir);
+    for (const file of files) {
+      const traceFile = path.join(tracesDir, file);
+      await fs.promises.unlink(traceFile);
+      console.log(`Deleted trace: ${file}`);
+    }
+    console.log('Previous traces deleted.');
+  } catch (err) {
+    if ((err as NodeJS.ErrnoException).code === 'ENOENT') {
+      console.log('No traces directory found, nothing to delete.');
+    } else {
+      console.warn('Failed to delete traces:', err);
+    }
+  }
+}
+
 export async function initializeBrowser() {
   await retry(async () => {
     if (!browser) {
@@ -29,13 +50,15 @@ export async function initializeBrowser() {
     if (!context) {
       context = await browser.newContext();
       page = await context.newPage();
+
+      await context.tracing.start({ screenshots: true, snapshots: true });
     }
   });
 
   if (!context || !page) {
     throw new Error('Browser initialization failed.');
   }
-  await page.waitForTimeout(1000);
+  await page.waitForTimeout(3000);
 }
 
 export function getContext(): BrowserContext {
@@ -56,6 +79,12 @@ export async function closeBrowser() {
   await retry(
     async () => {
       if (browser) {
+        if (context) {
+          const traceTimestamp = new Date().toISOString().replace(/[:.]/g, '-');
+          const traceFilename = `trace-${traceTimestamp}.zip`;
+
+          await context.tracing.stop({ path: `traces/${traceFilename}` });
+        }
         await browser.close();
         browser = undefined;
         context = undefined;

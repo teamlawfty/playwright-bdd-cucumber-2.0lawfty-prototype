@@ -1,11 +1,15 @@
-import { Given, When, Then, After, setDefaultTimeout, Before } from '@cucumber/cucumber';
+import { Given, When, Then, After, setDefaultTimeout, Before, BeforeAll } from '@cucumber/cucumber';
 import { expect } from '@playwright/test';
 import * as dotenv from 'dotenv';
-import { initializeBrowser, closeBrowser, getPage, retry } from '../helpers/playwrightContext';
+import { initializeBrowser, closeBrowser, getPage, retry, deleteOldTraces } from '../helpers/playwrightContext';
 
 dotenv.config();
 
 setDefaultTimeout(25000);
+
+BeforeAll(async () => {
+  await deleteOldTraces();
+});
 
 Before(async () => {
   await initializeBrowser();
