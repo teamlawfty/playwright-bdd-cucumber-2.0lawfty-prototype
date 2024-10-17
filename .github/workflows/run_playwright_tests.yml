@@ -73,7 +73,4 @@ jobs:
         with:
           name: playwright-trace
           path: 'traces/*.zip'
-
-    resources:
-      limits:
-        memory: 8192M
+#test
