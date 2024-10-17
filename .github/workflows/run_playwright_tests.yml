@@ -1,0 +1,79 @@
+name: Run Playwright Tests
+
+on:
+  # Schedule to run daily at midnight UTC
+  schedule:
+    - cron: '0 0 * * *'
+
+  # Manual trigger
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Select environment to run tests'
+        required: true
+        default: 'staging'
+        type: choice
+        options:
+          - qa
+          - staging
+
+jobs:
+  run-tests:
+    name: Run Playwright tests
+    runs-on: ubuntu-22.04
+    env:
+      # Default values that will be overwritten based on environment selected
+      HOST: ${{ secrets.HOST }}
+      EMAIL: ${{ secrets.EMAIL }}
+      PASSWORD: ${{ secrets.PASSWORD }}
+      NEW_INQUIRY_URL: ${{ secrets.NEW_INQUIRY_URL }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        run: |
+          npm install
+
+      - name: Install Playwright Chromium Browser
+        run: |
+          npx playwright install chromium
+
+      - name: Set environment variables for the selected environment
+        run: |
+          echo "Selected environment: ${{ github.event.inputs.environment }}"
+          if [[ "${{ github.event.inputs.environment }}" == "qa" ]]; then
+            echo "HOST=${{ secrets.QA_HOST }}" >> $GITHUB_ENV
+            echo "EMAIL=${{ secrets.QA_EMAIL }}" >> $GITHUB_ENV
+            echo "PASSWORD=${{ secrets.QA_PASSWORD }}" >> $GITHUB_ENV
+            echo "NEW_INQUIRY_URL=${{ secrets.QA_NEW_INQUIRY_URL }}" >> $GITHUB_ENV
+          else
+            echo "HOST=${{ secrets.STAGING_HOST }}" >> $GITHUB_ENV
+            echo "EMAIL=${{ secrets.STAGING_EMAIL }}" >> $GITHUB_ENV
+            echo "PASSWORD=${{ secrets.STAGING_PASSWORD }}" >> $GITHUB_ENV
+            echo "NEW_INQUIRY_URL=${{ secrets.STAGING_NEW_INQUIRY_URL }}" >> $GITHUB_ENV
+          fi
+
+      - name: Delete old traces
+        run: |
+          rm -rf traces/* || true
+
+      - name: Run Playwright tests
+        run: |
+          npm test
+
+      - name: Upload Playwright trace
+        uses: actions/upload-artifact@v3
+        with:
+          name: playwright-trace
+          path: 'traces/*.zip'
+
+    resources:
+      limits:
+        memory: 8192M
