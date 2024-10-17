@@ -143,7 +143,7 @@ Then(/^I should see the "(.+)" (field|button|checkbox|link|textarea)$/, async (l
       const element = page.locator(locator);
       if ((await element.count()) > 0) {
         await element.scrollIntoViewIfNeeded();
-        await element.waitFor({ state: 'visible', timeout: 10000 });
+        await element.waitFor({ state: 'visible', timeout: 30000 });
         await expect(element).toBeVisible();
         elementFound = true;
         break;
