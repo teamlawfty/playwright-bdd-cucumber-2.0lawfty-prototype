@@ -6,7 +6,9 @@ on:
       - opened
       - synchronize
       - reopened
-
+  push:
+    branches:
+      - main
 jobs:
   lint-and-typecheck:
     name: Lint & Typecheck
@@ -60,4 +62,4 @@ jobs:
       - name: Run Playwright tests
         run: |
           npm test
-        imeout-minutes: 1
+        timeout-minutes: 1
