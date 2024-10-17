@@ -25,6 +25,7 @@ When(/^I navigate to "(.+)"$/, async (path: string) => {
   const page = getPage(); // Get the page instance
   const url = process.env.HOST + path;
   await retry(() => page.goto(url, { waitUntil: 'networkidle' }));
+  console.log(`Navigating to ${url}`);
 });
 
 When(/^I click the "(.+)" (button|link)$/, async (buttonText: string, elementType: string) => {
