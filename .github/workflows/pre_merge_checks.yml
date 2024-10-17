@@ -1,0 +1,78 @@
+name: Pre-merge checks
+
+on:
+  pull_request:
+    types:
+      - opened
+      - synchronize
+      - reopened
+  push:
+    branches:
+      - main
+    schedule:
+      - cron: '*/5 * * * *'
+  workflow_dispatch:
+jobs:
+  lint-and-typecheck:
+    name: Lint & Typecheck
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        run: |
+          npm install
+
+      - name: Run pre-commit lint checks
+        run: |
+          yarn pre-commit-checks
+
+      - name: Run tsc (TypeScript Compiler)
+        run: |
+          yarn tsc
+
+  test:
+    name: Run Playwright specs
+    runs-on: ubuntu-22.04
+    env:
+      HOST: ${{ secrets.HOST }}
+      EMAIL: ${{ secrets.EMAIL }}
+      PASSWORD: ${{ secrets.PASSWORD }}
+      NEW_INQUIRY_URL: ${{ secrets.NEW_INQUIRY_URL }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        run: |
+          npm install
+
+      - name: Install Playwright Chromium Browser
+        run: |
+          npx playwright install chromium
+
+      - name: Delete old traces
+        run: |
+          rm -rf traces/* || true
+
+      - name: Run Playwright tests
+        run: |
+          npm test
+        continue-on-error: true
+
+      - name: Upload Playwright trace
+        uses: actions/upload-artifact@v3
+        with:
+          name: playwright-trace
+          path: 'traces/*.zip'

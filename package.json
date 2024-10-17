@@ -5,7 +5,10 @@
   "main": "index.js",
   "scripts": {
     "generate-steps": "node scripts/generate-steps.js",
-    "test": "cucumber-js --parallel 1"
+    "test": "cucumber-js --parallel 1",
+    "prepare": "husky install",
+    "pre-commit-checks": "npx lint-staged",
+    "lint": "eslint '**/*.{ts,tsx,js}'"
   },
   "keywords": [],
   "author": "",
@@ -16,9 +19,29 @@
     "playwright": "^1.46.1"
   },
   "devDependencies": {
+    "@eslint/compat": "^1.2.0",
+    "@eslint/js": "^9.12.0",
     "@playwright/test": "^1.46.1",
+    "@types/jest": "^29.5.13",
     "@types/node": "^22.5.2",
+    "eslint": "^9.12.0",
+    "eslint-config-prettier": "^9.1.0",
+    "eslint-plugin-cucumber": "^2.0.0",
+    "eslint-plugin-prettier": "^5.2.1",
+    "eslint-plugin-react": "^7.37.1",
+    "globals": "^15.11.0",
+    "husky": "^8.0.0",
+    "lint-staged": "^15.2.10",
+    "prettier": "^3.3.3",
+    "prettier-plugin-gherkin": "^3.1.0",
     "ts-node": "^10.9.2",
-    "typescript": "^5.5.4"
+    "typescript": "^5.5.4",
+    "typescript-eslint": "^8.8.1"
+  },
+  "lint-staged": {
+    "**/*.(ts|tsx)": [
+      "eslint --fix",
+      "prettier --write --ignore-unknown"
+    ]
   }
 }

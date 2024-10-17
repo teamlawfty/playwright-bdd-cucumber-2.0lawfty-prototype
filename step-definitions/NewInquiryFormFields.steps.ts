@@ -1,4 +1,4 @@
-import { Given, When, Then, Before, After, BeforeAll, AfterAll } from '@cucumber/cucumber';
+import { Given, When, Then, BeforeAll, AfterAll } from '@cucumber/cucumber';
 import { expect, Page } from '@playwright/test';
 import { LoginPage } from '../page-objects/LoginPage';
 import { NewInquiryPage } from '../page-objects/NewInquiryPage';
@@ -32,11 +32,11 @@ AfterAll(async () => {
 });
 
 Given('I am on the New Inquiry form page', async () => {
-    await newInquiryPage.navigateToNewInquiryPage(process.env.NEW_INQUIRY_URL || '');
+  await newInquiryPage.navigateToNewInquiryPage(process.env.NEW_INQUIRY_URL || '');
 });
 
 When('I view the form fields', async () => {
-    await newInquiryPage.verifyFormFieldsVisible();
+  await newInquiryPage.verifyFormFieldsVisible();
 });
 
 Then('I should see all required fields on the New Inquiry form', async (dataTable) => {
@@ -44,36 +44,37 @@ Then('I should see all required fields on the New Inquiry form', async (dataTabl
   await newInquiryPage.verifyFieldsExist(fieldNames);
 });
 
-Then('I should see a dropdown for Inquiry Type - {string} dropdown, with options: Call, Chat, Form, Referred, Secondary', async (dropdown) => {
+Then(
+  'I should see a dropdown for Inquiry Type - {string} dropdown, with options: Call, Chat, Form, Referred, Secondary',
+  async (dropdown) => {
     await newInquiryPage.verifyDropdownOptions(dropdown, ['CALL', 'CHAT', 'FORM', 'REFERED', 'SECONDARY']);
+  },
+);
+
+When('I enter {string} in the {string} field for Campaign', async () => {
+  await newInquiryPage.selectCampaign();
 });
 
-When('I enter {string} in the {string} field for Campaign', async (value, locator) => {
-    await newInquiryPage.selectCampaign();
+When('I enter {string} in the {string} field for Inquiry Date', async () => {
+  await newInquiryPage.enterInquiryDate();
 });
 
-When('I enter {string} in the {string} field for Inquiry Date', async (value, locator) => {
-    await newInquiryPage.enterInquiryDate();
+When('I enter {string} in the {string} field for Case Type', async () => {
+  await newInquiryPage.selectCaseType();
 });
 
-When('I enter {string} in the {string} field for Case Type', async (value, locator) => {
-    await newInquiryPage.selectCaseType();
+When('I enter {string} in the {string} field for Source', async () => {
+  await newInquiryPage.selectSource();
 });
 
-When('I enter {string} in the {string} field for Source', async (value, locator) => {
-    await newInquiryPage.selectSource();
-});
-
-When('I click {string} button', async (locator) => {
-    await newInquiryPage.submitInquiry();
-
+When('I click {string} button', async () => {
+  await newInquiryPage.submitInquiry();
 });
 
 Then('the inquiry should be saved', async () => {
-    //to be implemented after bug fix
+  //to be implemented after bug fix
 });
 
 Then('I should see a confirmation message indicating the inquiry has been successfully created', async () => {
-    //to be implemented after bug fix
+  //to be implemented after bug fix
 });
-

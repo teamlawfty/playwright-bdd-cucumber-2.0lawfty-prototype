@@ -1,4 +1,7 @@
+/* eslint-disable @typescript-eslint/no-require-imports */
+/* eslint-disable no-undef */
 const fs = require('fs');
+
 const path = require('path');
 
 // Get the feature file path from the command-line arguments
@@ -26,19 +29,21 @@ import { Given, When, Then } from '@cucumber/cucumber';
 `;
 
 let previousKeyword = null;
-const stepDefinitions = steps.map(({ keyword, step }) => {
-  if (keyword === 'And') {
-    keyword = previousKeyword;
-  } else {
-    previousKeyword = keyword;
-  }
-  
-  return `
+const stepDefinitions = steps
+  .map(({ keyword, step }) => {
+    if (keyword === 'And') {
+      keyword = previousKeyword;
+    } else {
+      previousKeyword = keyword;
+    }
+
+    return `
     ${keyword}('${step}', async () => {
       // Implement this step
     });
   `;
-}).join('\n');
+  })
+  .join('\n');
 
 // Combine imports with step definitions
 const fileContent = cucumberImports + stepDefinitions;

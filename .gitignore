@@ -6,3 +6,5 @@
 /playwright/.cache/
 .env
 .env.*
+.vscode/
+/traces/
